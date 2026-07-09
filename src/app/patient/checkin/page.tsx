@@ -1,0 +1,37 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { requireProfile } from "@/lib/auth/profile";
+import { CheckinWizard } from "@/components/checkin/CheckinWizard";
+
+export default async function CheckinPage() {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+
+  const { data: patient } = await supabase
+    .from("patients")
+    .select("*")
+    .eq("patient_family_profile_id", profile.id)
+    .eq("active_status", true)
+    .limit(1)
+    .single();
+
+  if (!patient) redirect("/patient");
+
+  const [{ data: definitions }, { data: settings }] = await Promise.all([
+    supabase.from("symptom_definitions").select("*").eq("active_status", true).order("sort_order"),
+    supabase.from("patient_symptom_settings").select("*").eq("patient_id", patient.id),
+  ]);
+
+  const disabledIds = new Set((settings ?? []).filter((s) => !s.enabled).map((s) => s.symptom_definition_id));
+  const catalog = (definitions ?? []).filter((d) => !disabledIds.has(d.id));
+
+  return (
+    <CheckinWizard
+      patientId={patient.id}
+      patientFirstName={patient.first_name}
+      coreSymptoms={catalog.filter((d) => d.is_core)}
+      optionalSymptoms={catalog.filter((d) => d.is_optional && !d.is_safety_flag)}
+      safetySymptoms={catalog.filter((d) => d.is_safety_flag)}
+    />
+  );
+}
