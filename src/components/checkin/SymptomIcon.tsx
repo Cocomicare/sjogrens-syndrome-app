@@ -6,6 +6,7 @@ import type { SeverityBand } from "@/lib/types/domain";
 /** Symptoms with real uploaded photo icons (public/icons/<symptomName>/<band>.jpg), overriding the drawn SVG set below. */
 const PHOTO_ICONS: Record<string, true> = {
   eye_dryness: true,
+  mouth_dryness: true,
 };
 
 function photoSrc(symptomName: string, band: SeverityBand) {
@@ -298,10 +299,7 @@ export function SymptomIcon({
 
   if (symptomName && PHOTO_ICONS[symptomName]) {
     return (
-      <span
-        className={clsx("relative block shrink-0 overflow-hidden rounded-full", className)}
-        style={{ boxShadow: `0 0 0 3px ${colors.ring}` }}
-      >
+      <span className={clsx("relative block shrink-0 overflow-hidden rounded-full", className)}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={photoSrc(symptomName, band)} alt="" className="h-full w-full object-cover" />
       </span>
