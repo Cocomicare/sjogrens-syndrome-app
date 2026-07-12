@@ -1,43 +1,54 @@
 "use client";
 
-function descriptor(score: number): string {
-  if (score === 0) return "None";
-  if (score <= 3) return "Mild";
-  if (score <= 6) return "Moderate";
-  if (score <= 8) return "Significant";
-  return "Severe";
-}
+import clsx from "clsx";
+import {
+  SEVERITY_BAND_COLOR,
+  SEVERITY_BAND_LABEL,
+  SEVERITY_BAND_ORDER,
+  SEVERITY_BAND_SCORE,
+  severityBand,
+} from "@/lib/types/domain";
+import { SymptomIcon } from "./SymptomIcon";
 
 export function ScoreScale({
   label,
   value,
   onChange,
+  symptomName,
 }: {
   label: string;
   value: number;
   onChange: (value: number) => void;
+  symptomName?: string;
 }) {
+  const currentBand = severityBand(value);
+
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="font-medium text-zinc-900">{label}</span>
-        <span className="rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-brand-dark">
-          {value} · {descriptor(value)}
-        </span>
-      </div>
-      <input
-        type="range"
-        min={0}
-        max={10}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="h-3 w-full cursor-pointer appearance-none rounded-full bg-zinc-200 accent-brand"
-        aria-label={label}
-      />
-      <div className="mt-1 flex justify-between text-[10px] text-zinc-400">
-        <span>0 · None</span>
-        <span>10 · Severe</span>
+      <p className="mb-3 font-medium text-zinc-900">{label}</p>
+      <div className="grid grid-cols-5 gap-1.5">
+        {SEVERITY_BAND_ORDER.map((band) => {
+          const selected = band === currentBand;
+          const colors = SEVERITY_BAND_COLOR[band];
+          return (
+            <button
+              key={band}
+              type="button"
+              onClick={() => onChange(SEVERITY_BAND_SCORE[band])}
+              aria-pressed={selected}
+              aria-label={`${label}: ${SEVERITY_BAND_LABEL[band]}`}
+              className={clsx(
+                "tap-target flex flex-col items-center gap-1 rounded-xl border-2 px-1 py-2 text-center transition-colors",
+                selected ? `${colors.border} ${colors.bg}` : "border-zinc-200 bg-white hover:border-zinc-300"
+              )}
+            >
+              <SymptomIcon symptomName={symptomName} band={band} className="h-9 w-9" />
+              <span className={clsx("text-[9px] font-medium leading-tight", selected ? colors.text : "text-zinc-500")}>
+                {SEVERITY_BAND_LABEL[band]}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -7,11 +7,11 @@ export interface FeelingOption {
 }
 
 export const OVERALL_FEELING_OPTIONS: FeelingOption[] = [
-  { value: 4, emoji: "😊", label: "Great" },
-  { value: 3, emoji: "🙂", label: "Okay" },
-  { value: 2, emoji: "😐", label: "Not great" },
-  { value: 1, emoji: "🙁", label: "Bad" },
-  { value: 0, emoji: "😣", label: "Very bad" },
+  { value: 4, emoji: "🥳", label: "Great" },
+  { value: 3, emoji: "😊", label: "Okay" },
+  { value: 2, emoji: "😕", label: "Not great" },
+  { value: 1, emoji: "😟", label: "Bad" },
+  { value: 0, emoji: "😭", label: "Very bad" },
 ];
 
 export function feelingOption(value: number | null | undefined): FeelingOption | undefined {
@@ -70,6 +70,43 @@ export const ROLE_HOME_PATH: Record<string, string> = {
   doctor: "/doctor",
   patient_family: "/patient",
 };
+
+export type SeverityBand = "none" | "mild" | "moderate" | "significant" | "severe";
+
+export const SEVERITY_BAND_LABEL: Record<SeverityBand, string> = {
+  none: "None",
+  mild: "Mild",
+  moderate: "Moderate",
+  significant: "Significant",
+  severe: "Severe",
+};
+
+export const SEVERITY_BAND_COLOR: Record<SeverityBand, { bg: string; text: string; border: string }> = {
+  none: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400" },
+  mild: { bg: "bg-brand-soft", text: "text-brand-dark", border: "border-brand" },
+  moderate: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-400" },
+  significant: { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-400" },
+  severe: { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-400" },
+};
+
+/** Representative 0-10 score stored when a patient taps a severity-band icon (upper bound of each band). */
+export const SEVERITY_BAND_SCORE: Record<SeverityBand, number> = {
+  none: 0,
+  mild: 3,
+  moderate: 6,
+  significant: 8,
+  severe: 10,
+};
+
+export const SEVERITY_BAND_ORDER: SeverityBand[] = ["none", "mild", "moderate", "significant", "severe"];
+
+export function severityBand(score: number): SeverityBand {
+  if (score === 0) return "none";
+  if (score <= 3) return "mild";
+  if (score <= 6) return "moderate";
+  if (score <= 8) return "significant";
+  return "severe";
+}
 
 export const SAFETY_DISCLAIMER =
   "This entry includes symptoms that may require clinical attention. Contact your medical team or seek urgent care if symptoms are severe or concerning.";
