@@ -8,6 +8,10 @@ const PHOTO_ICONS: Record<string, true> = {
   eye_dryness: true,
   mouth_dryness: true,
   energy_level: true,
+  joint_pain: true,
+  muscle_pain: true,
+  thinking_focus: true,
+  overall_wellness: true,
 };
 
 function photoSrc(symptomName: string, band: SeverityBand) {

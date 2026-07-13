@@ -97,6 +97,34 @@ export const SYMPTOM_BAND_LABELS: Record<string, Record<SeverityBand, string>> =
     significant: "Super Dry",
     severe: "Ouchy Dry",
   },
+  joint_pain: {
+    none: "Feels Good",
+    mild: "A Little Achy",
+    moderate: "Achy",
+    significant: "Really Achy",
+    severe: "Ouchy",
+  },
+  muscle_pain: {
+    none: "Feels Good",
+    mild: "A Little Sore",
+    moderate: "Sore",
+    significant: "Really Sore",
+    severe: "Hurts a Lot",
+  },
+  thinking_focus: {
+    none: "Clear",
+    mild: "Focused",
+    moderate: "Thinking Hard",
+    significant: "Struggling",
+    severe: "Overwhelmed",
+  },
+  overall_wellness: {
+    none: "Great Day!",
+    mild: "Pretty Good",
+    moderate: "Okay",
+    significant: "Tough Day",
+    severe: "Really Hard Day",
+  },
 };
 
 export function symptomBandLabel(symptomName: string | undefined, band: SeverityBand): string {
