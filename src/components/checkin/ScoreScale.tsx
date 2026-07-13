@@ -3,10 +3,10 @@
 import clsx from "clsx";
 import {
   SEVERITY_BAND_COLOR,
-  SEVERITY_BAND_LABEL,
   SEVERITY_BAND_ORDER,
   SEVERITY_BAND_SCORE,
   severityBand,
+  symptomBandLabel,
 } from "@/lib/types/domain";
 import { SymptomIcon } from "./SymptomIcon";
 
@@ -36,7 +36,7 @@ export function ScoreScale({
               type="button"
               onClick={() => onChange(SEVERITY_BAND_SCORE[band])}
               aria-pressed={selected}
-              aria-label={`${label}: ${SEVERITY_BAND_LABEL[band]}`}
+              aria-label={`${label}: ${symptomBandLabel(symptomName, band)}`}
               className={clsx(
                 "tap-target flex flex-col items-center gap-1 rounded-xl border-2 px-1 py-2 text-center transition-colors",
                 selected ? `${colors.border} ${colors.bg}` : "border-zinc-200 bg-white hover:border-zinc-300"
@@ -44,7 +44,7 @@ export function ScoreScale({
             >
               <SymptomIcon symptomName={symptomName} band={band} className="h-9 w-9" />
               <span className={clsx("text-[9px] font-medium leading-tight", selected ? colors.text : "text-zinc-500")}>
-                {SEVERITY_BAND_LABEL[band]}
+                {symptomBandLabel(symptomName, band)}
               </span>
             </button>
           );

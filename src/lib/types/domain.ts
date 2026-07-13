@@ -81,6 +81,28 @@ export const SEVERITY_BAND_LABEL: Record<SeverityBand, string> = {
   severe: "Severe",
 };
 
+/** Playful per-symptom label overrides, keyed by symptom_definitions.name. Falls back to SEVERITY_BAND_LABEL. */
+export const SYMPTOM_BAND_LABELS: Record<string, Record<SeverityBand, string>> = {
+  eye_dryness: {
+    none: "Happy Eyes",
+    mild: "A Bit Dry",
+    moderate: "Dry Eyes",
+    significant: "Super Dry",
+    severe: "Ouchy Dry",
+  },
+  mouth_dryness: {
+    none: "Happy Mouth",
+    mild: "A Bit Dry",
+    moderate: "Sticky Mouth",
+    significant: "Super Dry",
+    severe: "Ouchy Dry",
+  },
+};
+
+export function symptomBandLabel(symptomName: string | undefined, band: SeverityBand): string {
+  return (symptomName && SYMPTOM_BAND_LABELS[symptomName]?.[band]) || SEVERITY_BAND_LABEL[band];
+}
+
 export const SEVERITY_BAND_COLOR: Record<SeverityBand, { bg: string; text: string; border: string }> = {
   none: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400" },
   mild: { bg: "bg-brand-soft", text: "text-brand-dark", border: "border-brand" },
