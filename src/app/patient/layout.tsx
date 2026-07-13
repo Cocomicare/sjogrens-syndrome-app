@@ -14,7 +14,15 @@ export default async function PatientLayout({ children }: { children: React.Reac
             <span className="text-lg">💧</span> Sjögren&apos;s Signal
           </span>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-zinc-500">Hi, {profile.first_name}</span>
+            <span className="flex items-center gap-1.5 text-sm text-zinc-500">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-soft text-brand-dark">
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8v1H4v-1Z" />
+                </svg>
+              </span>
+              {profile.first_name}
+            </span>
             <SignOutButton />
           </div>
         </div>

@@ -54,7 +54,6 @@ export default async function CheckinPage({
     const safetyIds = new Set(catalog.filter((d) => d.is_safety_flag).map((d) => d.id));
 
     initial = {
-      overallFeeling: existingCheckin.overall_feeling,
       coreScores: Object.fromEntries(
         (symptomEntries ?? []).filter((e) => coreIds.has(e.symptom_definition_id)).map((e) => [e.symptom_definition_id, e.score ?? 0])
       ),

@@ -40,16 +40,6 @@ export default async function PatientDashboardPage() {
     .order("entry_date", { ascending: false });
 
   const todayCheckin = recentCheckins?.find((c) => c.entry_date === today && c.completed_at);
-  const lastCheckin = recentCheckins?.find((c) => c.completed_at);
-
-  let streak = 0;
-  for (let i = 0; i < 60; i++) {
-    const day = format(subDays(new Date(), i), "yyyy-MM-dd");
-    const found = recentCheckins?.find((c) => c.entry_date === day && c.completed_at);
-    if (i === 0 && !found) continue; // today may not be done yet without breaking the streak
-    if (!found) break;
-    streak++;
-  }
 
   const trendData = Array.from({ length: TREND_DAYS }).map((_, i) => {
     const day = subDays(new Date(), TREND_DAYS - 1 - i);
@@ -110,32 +100,6 @@ export default async function PatientDashboardPage() {
               <p className="mt-2 text-xs text-zinc-400">Last {TREND_DAYS} days · 0 = Very bad · 4 = Great</p>
             </>
           )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Streak</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-semibold text-zinc-900">{streak} day{streak === 1 ? "" : "s"} 🔥</p>
-          <p className="mt-1 text-sm text-zinc-500">
-            {lastCheckin
-              ? `Last check-in: ${format(new Date(lastCheckin.entry_date), "MMMM d, yyyy")}`
-              : "No check-ins yet."}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-zinc-600">
-          <p>
-            <span className="font-medium text-zinc-900">{patient.first_name} {patient.last_name}</span>
-          </p>
-          <p>Date of birth: {format(new Date(patient.date_of_birth), "MMMM d, yyyy")}</p>
         </CardContent>
       </Card>
     </div>

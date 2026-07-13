@@ -6,13 +6,21 @@ import clsx from "clsx";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/Button";
 import { ScoreScale } from "./ScoreScale";
-import { OVERALL_FEELING_OPTIONS, SAFETY_DISCLAIMER } from "@/lib/types/domain";
+import { SAFETY_DISCLAIMER, severityBand, type SeverityBand } from "@/lib/types/domain";
 import type { SymptomDefinition } from "@/lib/types/database";
 
-type Step = "greeting" | "core" | "optional" | "confirmation";
+type Step = "core" | "optional" | "confirmation";
+
+/** Overall daily_checkins.overall_feeling (0-4) derived from the "How was your day?" symptom score. */
+const BAND_TO_FEELING: Record<SeverityBand, number> = {
+  none: 4,
+  mild: 3,
+  moderate: 2,
+  significant: 1,
+  severe: 0,
+};
 
 export interface CheckinInitialData {
-  overallFeeling: number | null;
   coreScores: Record<string, number>;
   optionalScores: Record<string, number>;
   safetyPresent: Record<string, boolean>;
@@ -29,7 +37,7 @@ interface Props {
   initial?: CheckinInitialData;
 }
 
-const STEP_ORDER: Step[] = ["greeting", "core", "optional", "confirmation"];
+const STEP_ORDER: Step[] = ["core", "optional", "confirmation"];
 
 export function CheckinWizard({
   patientId,
@@ -42,8 +50,7 @@ export function CheckinWizard({
   initial,
 }: Props) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("greeting");
-  const [overallFeeling, setOverallFeeling] = useState<number | null>(initial?.overallFeeling ?? null);
+  const [step, setStep] = useState<Step>("core");
   const [coreScores, setCoreScores] = useState<Record<string, number>>(
     initial?.coreScores ?? Object.fromEntries(coreSymptoms.map((s) => [s.id, 3]))
   );
@@ -81,6 +88,10 @@ export function CheckinWizard({
     setSubmitting(true);
     setError(null);
 
+    const overallSymptom = coreSymptoms.find((s) => s.name === "overall_wellness");
+    const overallScore = overallSymptom ? coreScores[overallSymptom.id] ?? 6 : 6;
+    const overallFeeling = BAND_TO_FEELING[severityBand(overallScore)];
+
     const payload = {
       patientId,
       entryDate,
@@ -112,7 +123,7 @@ export function CheckinWizard({
     <div className="flex flex-col gap-5">
       {step !== "confirmation" && (
         <div className="flex gap-1.5">
-          {STEP_ORDER.slice(0, 3).map((s, i) => (
+          {STEP_ORDER.slice(0, 2).map((s, i) => (
             <div
               key={s}
               className={clsx("h-1.5 flex-1 rounded-full", i <= stepIndex ? "bg-brand" : "bg-zinc-200")}
@@ -121,41 +132,14 @@ export function CheckinWizard({
         </div>
       )}
 
-      {step === "greeting" && (
+      {step === "core" && (
         <div className="flex flex-col gap-5">
           {isEditing && (
             <p className="text-sm font-medium text-brand-dark">Editing check-in for {entryDateLabel}</p>
           )}
           <h1 className="text-xl font-semibold text-zinc-900">
-            {isEditing ? `How was ${patientFirstName} feeling that day?` : `How is ${patientFirstName} feeling today?`}
+            {isEditing ? `${patientFirstName}'s symptoms that day` : "A few quick symptoms"}
           </h1>
-          <div className="grid grid-cols-1 gap-3">
-            {OVERALL_FEELING_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setOverallFeeling(opt.value)}
-                className={clsx(
-                  "tap-target flex items-center gap-4 rounded-2xl border-2 px-5 py-4 text-left transition-colors",
-                  overallFeeling === opt.value
-                    ? "border-brand bg-brand-soft"
-                    : "border-zinc-200 bg-white hover:border-zinc-300"
-                )}
-              >
-                <span className="text-3xl">{opt.emoji}</span>
-                <span className="text-lg font-medium text-zinc-900">{opt.label}</span>
-              </button>
-            ))}
-          </div>
-          <Button size="lg" disabled={overallFeeling === null} onClick={goNext}>
-            Continue
-          </Button>
-        </div>
-      )}
-
-      {step === "core" && (
-        <div className="flex flex-col gap-5">
-          <h1 className="text-xl font-semibold text-zinc-900">A few quick symptoms</h1>
           <div className="flex flex-col gap-3">
             {coreSymptoms.map((symptom) => (
               <ScoreScale
@@ -167,14 +151,9 @@ export function CheckinWizard({
               />
             ))}
           </div>
-          <div className="flex gap-3">
-            <Button size="lg" variant="secondary" onClick={goBack}>
-              Back
-            </Button>
-            <Button size="lg" className="flex-1" onClick={goNext}>
-              Continue
-            </Button>
-          </div>
+          <Button size="lg" onClick={goNext}>
+            Continue
+          </Button>
         </div>
       )}
 
