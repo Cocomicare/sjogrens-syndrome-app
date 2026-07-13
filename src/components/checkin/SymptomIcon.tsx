@@ -7,6 +7,7 @@ import type { SeverityBand } from "@/lib/types/domain";
 const PHOTO_ICONS: Record<string, true> = {
   eye_dryness: true,
   mouth_dryness: true,
+  energy_level: true,
 };
 
 function photoSrc(symptomName: string, band: SeverityBand) {

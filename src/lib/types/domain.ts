@@ -98,7 +98,8 @@ export const SEVERITY_BAND_SCORE: Record<SeverityBand, number> = {
   severe: 10,
 };
 
-export const SEVERITY_BAND_ORDER: SeverityBand[] = ["none", "mild", "moderate", "significant", "severe"];
+/** Display order left-to-right: worst (severe) to best (none). */
+export const SEVERITY_BAND_ORDER: SeverityBand[] = ["severe", "significant", "moderate", "mild", "none"];
 
 export function severityBand(score: number): SeverityBand {
   if (score === 0) return "none";
