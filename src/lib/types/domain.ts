@@ -97,6 +97,13 @@ export const SYMPTOM_BAND_LABELS: Record<string, Record<SeverityBand, string>> =
     significant: "Super Dry",
     severe: "Ouchy Dry",
   },
+  energy_level: {
+    none: "Full Energy",
+    mild: "Pretty Good",
+    moderate: "Tired",
+    significant: "Wiped Out",
+    severe: "Depleted",
+  },
   joint_pain: {
     none: "Feels Good",
     mild: "A Little Achy",
