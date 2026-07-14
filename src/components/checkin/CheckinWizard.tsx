@@ -33,6 +33,7 @@ interface Props {
   optionalSymptoms: SymptomDefinition[];
   safetySymptoms: SymptomDefinition[];
   entryDate: string;
+  checkinId?: string;
   isEditing?: boolean;
   initial?: CheckinInitialData;
 }
@@ -46,6 +47,7 @@ export function CheckinWizard({
   optionalSymptoms,
   safetySymptoms,
   entryDate,
+  checkinId,
   isEditing = false,
   initial,
 }: Props) {
@@ -93,6 +95,7 @@ export function CheckinWizard({
     const overallFeeling = BAND_TO_FEELING[severityBand(overallScore)];
 
     const payload = {
+      checkinId,
       patientId,
       entryDate,
       overallFeeling,

@@ -360,7 +360,7 @@ async function seedPatientCheckins(
       });
     }
 
-    await recalculateSignalForPatientDate(admin, patientId, entryDate);
+    await recalculateSignalForPatientDate(admin, patientId, checkin.id, entryDate);
   }
 }
 

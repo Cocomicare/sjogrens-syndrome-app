@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { recalculateSignalForPatientDate } from "@/lib/signal/service";
 
 const checkinSchema = z.object({
+  checkinId: z.string().uuid().optional(),
   patientId: z.string().uuid(),
   entryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   overallFeeling: z.number().int().min(0).max(4),
@@ -30,8 +31,17 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid check-in data." }, { status: 400 });
   }
-  const { patientId, entryDate, overallFeeling, coreScores, optionalScores, safetyPresent, familyObservations, familyNote } =
-    parsed.data;
+  const {
+    checkinId,
+    patientId,
+    entryDate,
+    overallFeeling,
+    coreScores,
+    optionalScores,
+    safetyPresent,
+    familyObservations,
+    familyNote,
+  } = parsed.data;
 
   const supabase = await createClient();
   const {
@@ -54,23 +64,48 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Patient not found for this account." }, { status: 403 });
   }
 
-  const { data: checkin, error: checkinError } = await supabase
-    .from("daily_checkins")
-    .upsert(
-      {
+  let checkin;
+  if (checkinId) {
+    const { data: existing } = await supabase
+      .from("daily_checkins")
+      .select("id")
+      .eq("id", checkinId)
+      .eq("patient_id", patientId)
+      .maybeSingle();
+    if (!existing) {
+      return NextResponse.json({ error: "Check-in not found for this account." }, { status: 403 });
+    }
+
+    const { data, error } = await supabase
+      .from("daily_checkins")
+      .update({
+        entry_date: entryDate,
+        overall_feeling: overallFeeling,
+        completed_at: new Date().toISOString(),
+      })
+      .eq("id", checkinId)
+      .select()
+      .single();
+    checkin = data;
+    if (error || !checkin) {
+      return NextResponse.json({ error: "Could not save your check-in. Please try again." }, { status: 500 });
+    }
+  } else {
+    const { data, error } = await supabase
+      .from("daily_checkins")
+      .insert({
         patient_id: patientId,
         entry_date: entryDate,
         overall_feeling: overallFeeling,
         entered_by_profile_id: profile.id,
         completed_at: new Date().toISOString(),
-      },
-      { onConflict: "patient_id,entry_date" }
-    )
-    .select()
-    .single();
-
-  if (checkinError || !checkin) {
-    return NextResponse.json({ error: "Could not save your check-in. Please try again." }, { status: 500 });
+      })
+      .select()
+      .single();
+    checkin = data;
+    if (error || !checkin) {
+      return NextResponse.json({ error: "Could not save your check-in. Please try again." }, { status: 500 });
+    }
   }
 
   await supabase.from("symptom_entries").delete().eq("daily_checkin_id", checkin.id);
@@ -117,7 +152,7 @@ export async function POST(request: Request) {
   );
 
   const admin = createAdminClient();
-  await recalculateSignalForPatientDate(admin, patientId, entryDate);
+  await recalculateSignalForPatientDate(admin, patientId, checkin.id, entryDate);
 
   await supabase.from("audit_logs").insert({
     actor_profile_id: profile.id,

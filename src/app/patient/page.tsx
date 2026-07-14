@@ -29,7 +29,6 @@ export default async function PatientDashboardPage() {
   }
 
   const patient = patients[0];
-  const today = format(new Date(), "yyyy-MM-dd");
   const since = format(subDays(new Date(), TREND_DAYS - 1), "yyyy-MM-dd");
 
   const { data: recentCheckins } = await supabase
@@ -37,9 +36,8 @@ export default async function PatientDashboardPage() {
     .select("*")
     .eq("patient_id", patient.id)
     .gte("entry_date", since)
-    .order("entry_date", { ascending: false });
-
-  const todayCheckin = recentCheckins?.find((c) => c.entry_date === today && c.completed_at);
+    .order("entry_date", { ascending: false })
+    .order("completed_at", { ascending: false });
 
   const trendData = Array.from({ length: TREND_DAYS }).map((_, i) => {
     const day = subDays(new Date(), TREND_DAYS - 1 - i);
@@ -65,22 +63,16 @@ export default async function PatientDashboardPage() {
         <div className="relative flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-medium uppercase tracking-wide text-white/70">
-              {todayCheckin ? "All set for today" : `${patient.first_name}'s daily check-in`}
+              {patient.first_name}&apos;s daily check-in
             </p>
-            <p className="mt-2 text-2xl font-bold">
-              {todayCheckin ? "Nice work! 🎉" : "How are you feeling today?"}
-            </p>
-            <p className="mt-1 text-sm text-white/80">
-              {todayCheckin ? "See you again tomorrow." : "Takes less than a minute"}
-            </p>
+            <p className="mt-2 text-2xl font-bold">How are you feeling today?</p>
+            <p className="mt-1 text-sm text-white/80">Takes less than a minute</p>
           </div>
-          {!todayCheckin && (
-            <Link href="/patient/checkin" className="shrink-0">
-              <Button size="lg" variant="secondary" className="bg-white text-brand-dark shadow-md hover:bg-zinc-50">
-                Check in
-              </Button>
-            </Link>
-          )}
+          <Link href="/patient/checkin" className="shrink-0">
+            <Button size="lg" variant="secondary" className="bg-white text-brand-dark shadow-md hover:bg-zinc-50">
+              Check in
+            </Button>
+          </Link>
         </div>
       </div>
 

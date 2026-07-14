@@ -30,7 +30,8 @@ export default async function PatientHistoryPage() {
     .eq("patient_id", patient.id)
     .not("completed_at", "is", null)
     .gte("entry_date", since)
-    .order("entry_date", { ascending: false });
+    .order("entry_date", { ascending: false })
+    .order("completed_at", { ascending: false });
 
   const checkinIds = (checkins ?? []).map((c) => c.id);
 
@@ -52,9 +53,14 @@ export default async function PatientHistoryPage() {
     (familyObservations ?? []).filter((f) => f.notes && f.notes.trim().length > 0).map((f) => f.daily_checkin_id)
   );
 
-  const trendData = [...(checkins ?? [])]
-    .reverse()
-    .map((c) => ({ date: c.entry_date, value: c.overall_feeling }));
+  // checkins are ordered latest-first within a day, so the first entry seen per date is the one to chart.
+  const latestPerDay = new Map<string, number>();
+  for (const c of checkins ?? []) {
+    if (!latestPerDay.has(c.entry_date)) latestPerDay.set(c.entry_date, c.overall_feeling);
+  }
+  const trendData = [...latestPerDay.entries()]
+    .map(([date, value]) => ({ date, value }))
+    .reverse();
 
   return (
     <div className="flex flex-col gap-5">
@@ -101,6 +107,11 @@ export default async function PatientHistoryPage() {
                       <div>
                         <p className="text-sm font-medium text-zinc-900">
                           {format(new Date(c.entry_date + "T00:00:00"), "EEEE, MMM d, yyyy")}
+                          {c.completed_at && (
+                            <span className="ml-1.5 font-normal text-zinc-400">
+                              · {format(new Date(c.completed_at), "h:mm a")}
+                            </span>
+                          )}
                         </p>
                         <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                           <span className="text-xs text-zinc-500">{option?.label ?? "Unknown"}</span>
@@ -118,7 +129,7 @@ export default async function PatientHistoryPage() {
                       </div>
                     </div>
                     <Link
-                      href={`/patient/checkin?date=${c.entry_date}`}
+                      href={`/patient/checkin?id=${c.id}`}
                       className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-brand-dark hover:bg-brand-soft"
                     >
                       Edit

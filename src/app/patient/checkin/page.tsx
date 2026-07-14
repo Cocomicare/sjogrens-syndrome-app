@@ -7,7 +7,7 @@ import { CheckinWizard, type CheckinInitialData } from "@/components/checkin/Che
 export default async function CheckinPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ id?: string }>;
 }) {
   const profile = await requireProfile();
   const supabase = await createClient();
@@ -23,10 +23,6 @@ export default async function CheckinPage({
 
   if (!patient) redirect("/patient");
 
-  const today = format(new Date(), "yyyy-MM-dd");
-  const requestedDate = sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : today;
-  const entryDate = requestedDate > today ? today : requestedDate;
-
   const [{ data: definitions }, { data: settings }] = await Promise.all([
     supabase.from("symptom_definitions").select("*").eq("active_status", true).order("sort_order"),
     supabase.from("patient_symptom_settings").select("*").eq("patient_id", patient.id),
@@ -35,12 +31,18 @@ export default async function CheckinPage({
   const disabledIds = new Set((settings ?? []).filter((s) => !s.enabled).map((s) => s.symptom_definition_id));
   const catalog = (definitions ?? []).filter((d) => !disabledIds.has(d.id));
 
-  const { data: existingCheckin } = await supabase
-    .from("daily_checkins")
-    .select("*")
-    .eq("patient_id", patient.id)
-    .eq("entry_date", entryDate)
-    .maybeSingle();
+  let existingCheckin = null;
+  if (sp.id) {
+    const { data } = await supabase
+      .from("daily_checkins")
+      .select("*")
+      .eq("id", sp.id)
+      .eq("patient_id", patient.id)
+      .maybeSingle();
+    existingCheckin = data;
+  }
+
+  const entryDate = existingCheckin ? existingCheckin.entry_date : format(new Date(), "yyyy-MM-dd");
 
   let initial: CheckinInitialData | undefined;
   if (existingCheckin) {
@@ -73,6 +75,7 @@ export default async function CheckinPage({
       patientId={patient.id}
       patientFirstName={patient.first_name}
       entryDate={entryDate}
+      checkinId={existingCheckin?.id}
       isEditing={Boolean(existingCheckin)}
       initial={initial}
       coreSymptoms={catalog.filter((d) => d.is_core)}

@@ -17,27 +17,22 @@ import type { SymptomBaselineInput, SymptomObservation } from "./types";
 export async function recalculateSignalForPatientDate(
   supabase: SupabaseClient<Database>,
   patientId: string,
+  checkinId: string,
   checkinDate: string
 ): Promise<void> {
-  const [{ data: definitions }, { data: settings }, { data: checkin }] = await Promise.all([
+  const [{ data: definitions }, { data: settings }] = await Promise.all([
     supabase.from("symptom_definitions").select("*").eq("active_status", true),
     supabase.from("patient_symptom_settings").select("*").eq("patient_id", patientId),
-    supabase
-      .from("daily_checkins")
-      .select("id")
-      .eq("patient_id", patientId)
-      .eq("entry_date", checkinDate)
-      .single(),
   ]);
 
-  if (!definitions || !checkin) return;
+  if (!definitions) return;
 
   const settingsByDefinitionId = new Map((settings ?? []).map((s) => [s.symptom_definition_id, s]));
 
   const { data: todaysEntries } = await supabase
     .from("symptom_entries")
     .select("*")
-    .eq("daily_checkin_id", checkin.id);
+    .eq("daily_checkin_id", checkinId);
 
   const entriesByDefinitionId = new Map((todaysEntries ?? []).map((e) => [e.symptom_definition_id, e]));
 
