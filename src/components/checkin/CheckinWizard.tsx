@@ -33,6 +33,7 @@ interface Props {
   optionalSymptoms: SymptomDefinition[];
   safetySymptoms: SymptomDefinition[];
   entryDate: string;
+  entryTime: string;
   checkinId?: string;
   isEditing?: boolean;
   initial?: CheckinInitialData;
@@ -46,13 +47,16 @@ export function CheckinWizard({
   coreSymptoms,
   optionalSymptoms,
   safetySymptoms,
-  entryDate,
+  entryDate: initialEntryDate,
+  entryTime: initialEntryTime,
   checkinId,
   isEditing = false,
   initial,
 }: Props) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("core");
+  const [entryDate, setEntryDate] = useState(initialEntryDate);
+  const [entryTime, setEntryTime] = useState(initialEntryTime);
   const [coreScores, setCoreScores] = useState<Record<string, number>>(
     initial?.coreScores ?? Object.fromEntries(coreSymptoms.map((s) => [s.id, 3]))
   );
@@ -63,6 +67,7 @@ export function CheckinWizard({
   const [safetyPresent, setSafetyPresent] = useState<Record<string, boolean>>(initial?.safetyPresent ?? {});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const todayStr = format(new Date(), "yyyy-MM-dd");
   const entryDateLabel = format(new Date(entryDate + "T00:00:00"), "MMMM d, yyyy");
 
   const stepIndex = STEP_ORDER.indexOf(step);
@@ -98,6 +103,7 @@ export function CheckinWizard({
       checkinId,
       patientId,
       entryDate,
+      entryTime,
       overallFeeling,
       coreScores,
       optionalScores,
@@ -137,12 +143,27 @@ export function CheckinWizard({
 
       {step === "core" && (
         <div className="flex flex-col gap-5">
-          {isEditing && (
-            <p className="text-sm font-medium text-brand-dark">Editing check-in for {entryDateLabel}</p>
-          )}
           <h1 className="text-xl font-semibold text-zinc-900">
             {isEditing ? `${patientFirstName}'s symptoms that day` : "A few quick symptoms"}
           </h1>
+          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <label className="mb-2 block text-sm font-medium text-zinc-700">Check-in for</label>
+            <div className="flex gap-3">
+              <input
+                type="date"
+                value={entryDate}
+                max={todayStr}
+                onChange={(e) => setEntryDate(e.target.value)}
+                className="flex-1 rounded-xl border border-zinc-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+              />
+              <input
+                type="time"
+                value={entryTime}
+                onChange={(e) => setEntryTime(e.target.value)}
+                className="flex-1 rounded-xl border border-zinc-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+              />
+            </div>
+          </div>
           <div className="flex flex-col gap-3">
             {coreSymptoms.map((symptom) => (
               <ScoreScale

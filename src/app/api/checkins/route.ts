@@ -8,6 +8,7 @@ const checkinSchema = z.object({
   checkinId: z.string().uuid().optional(),
   patientId: z.string().uuid(),
   entryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  entryTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
   overallFeeling: z.number().int().min(0).max(4),
   coreScores: z.record(z.string().uuid(), z.number().int().min(0).max(10)),
   optionalScores: z.record(z.string().uuid(), z.number().int().min(0).max(10)),
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
     checkinId,
     patientId,
     entryDate,
+    entryTime,
     overallFeeling,
     coreScores,
     optionalScores,
@@ -42,6 +44,8 @@ export async function POST(request: Request) {
     familyObservations,
     familyNote,
   } = parsed.data;
+
+  const completedAt = entryTime ? new Date(`${entryDate}T${entryTime}:00`).toISOString() : new Date().toISOString();
 
   const supabase = await createClient();
   const {
@@ -81,7 +85,7 @@ export async function POST(request: Request) {
       .update({
         entry_date: entryDate,
         overall_feeling: overallFeeling,
-        completed_at: new Date().toISOString(),
+        completed_at: completedAt,
       })
       .eq("id", checkinId)
       .select()
@@ -98,7 +102,7 @@ export async function POST(request: Request) {
         entry_date: entryDate,
         overall_feeling: overallFeeling,
         entered_by_profile_id: profile.id,
-        completed_at: new Date().toISOString(),
+        completed_at: completedAt,
       })
       .select()
       .single();

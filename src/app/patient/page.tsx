@@ -5,6 +5,7 @@ import { requireProfile } from "@/lib/auth/profile";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { TrendLineChart } from "@/components/charts/TrendLineChart";
+import { signalCategoryHex } from "@/lib/types/domain";
 
 const TREND_DAYS = 30;
 
@@ -31,21 +32,25 @@ export default async function PatientDashboardPage() {
   const patient = patients[0];
   const since = format(subDays(new Date(), TREND_DAYS - 1), "yyyy-MM-dd");
 
-  const { data: recentCheckins } = await supabase
-    .from("daily_checkins")
+  const { data: signals } = await supabase
+    .from("symptom_signals")
     .select("*")
     .eq("patient_id", patient.id)
-    .gte("entry_date", since)
-    .order("entry_date", { ascending: false })
-    .order("completed_at", { ascending: false });
+    .gte("signal_date", since);
+
+  const signalByDate = new Map((signals ?? []).map((s) => [s.signal_date, s]));
 
   const trendData = Array.from({ length: TREND_DAYS }).map((_, i) => {
     const day = subDays(new Date(), TREND_DAYS - 1 - i);
     const dayStr = format(day, "yyyy-MM-dd");
-    const checkin = recentCheckins?.find((c) => c.entry_date === dayStr && c.completed_at);
-    return { date: dayStr, value: checkin ? checkin.overall_feeling : null };
+    const signal = signalByDate.get(dayStr);
+    return {
+      date: dayStr,
+      value: signal?.composite_score ?? null,
+      color: signal ? signalCategoryHex(signal.category) : undefined,
+    };
   });
-  const hasAnyCheckin = trendData.some((d) => d.value !== null);
+  const hasAnySignal = trendData.some((d) => d.value !== null);
 
   return (
     <div className="flex flex-col gap-5">
@@ -78,18 +83,20 @@ export default async function PatientDashboardPage() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Your trend</CardTitle>
+          <CardTitle>Your Composite Sjögren&apos;s Score</CardTitle>
           <Link href="/patient/history" className="text-sm font-medium text-brand-dark hover:underline">
             View full history →
           </Link>
         </CardHeader>
         <CardContent>
-          {!hasAnyCheckin ? (
+          {!hasAnySignal ? (
             <p className="text-sm text-zinc-500">No check-ins yet. Your first one only takes a minute!</p>
           ) : (
             <>
-              <TrendLineChart data={trendData} domain={[0, 4]} height={180} />
-              <p className="mt-2 text-xs text-zinc-400">Last {TREND_DAYS} days · 0 = Very bad · 4 = Great</p>
+              <TrendLineChart data={trendData} domain={[-5, 5]} height={180} />
+              <p className="mt-2 text-xs text-zinc-400">
+                Last {TREND_DAYS} days · combines all your tracked symptoms relative to your baseline · higher = more active symptoms
+              </p>
             </>
           )}
         </CardContent>

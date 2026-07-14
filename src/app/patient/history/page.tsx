@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/profile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { TrendLineChart } from "@/components/charts/TrendLineChart";
-import { feelingOption } from "@/lib/types/domain";
+import { SymptomIcon } from "@/components/checkin/SymptomIcon";
+import { feelingOption, severityBand, signalCategoryHex } from "@/lib/types/domain";
 
 const HISTORY_DAYS = 90;
 
@@ -53,14 +54,44 @@ export default async function PatientHistoryPage() {
     (familyObservations ?? []).filter((f) => f.notes && f.notes.trim().length > 0).map((f) => f.daily_checkin_id)
   );
 
-  // checkins are ordered latest-first within a day, so the first entry seen per date is the one to chart.
-  const latestPerDay = new Map<string, number>();
-  for (const c of checkins ?? []) {
-    if (!latestPerDay.has(c.entry_date)) latestPerDay.set(c.entry_date, c.overall_feeling);
+  const { data: signals } = await supabase
+    .from("symptom_signals")
+    .select("*")
+    .eq("patient_id", patient.id)
+    .gte("signal_date", since);
+
+  const signalByDate = new Map((signals ?? []).map((s) => [s.signal_date, s]));
+  const trendData = Array.from({ length: HISTORY_DAYS }).map((_, i) => {
+    const day = subDays(new Date(), HISTORY_DAYS - 1 - i);
+    const dayStr = format(day, "yyyy-MM-dd");
+    const signal = signalByDate.get(dayStr);
+    return {
+      date: dayStr,
+      value: signal?.composite_score ?? null,
+      color: signal ? signalCategoryHex(signal.category) : undefined,
+    };
+  });
+
+  // Symptoms worth their own trend page: every core symptom, plus any optional one the patient has actually logged.
+  const trackedOptionalIds = new Set((symptomEntries ?? []).map((e) => e.symptom_definition_id));
+  const listedSymptoms = (symptomDefinitions ?? [])
+    .filter((d) => !d.is_safety_flag && (d.is_core || trackedOptionalIds.has(d.id)))
+    .sort((a, b) => a.sort_order - b.sort_order);
+
+  // Most recent score per symptom, using checkins' existing latest-first ordering.
+  const checkinOrder = new Map((checkins ?? []).map((c, i) => [c.id, i]));
+  const latestBySymptom = new Map<string, number>();
+  const latestOrderBySymptom = new Map<string, number>();
+  for (const e of symptomEntries ?? []) {
+    if (e.score === null) continue;
+    const order = checkinOrder.get(e.daily_checkin_id);
+    if (order === undefined) continue;
+    const bestOrder = latestOrderBySymptom.get(e.symptom_definition_id);
+    if (bestOrder === undefined || order < bestOrder) {
+      latestOrderBySymptom.set(e.symptom_definition_id, order);
+      latestBySymptom.set(e.symptom_definition_id, e.score);
+    }
   }
-  const trendData = [...latestPerDay.entries()]
-    .map(([date, value]) => ({ date, value }))
-    .reverse();
 
   return (
     <div className="flex flex-col gap-5">
@@ -75,16 +106,46 @@ export default async function PatientHistoryPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Last {HISTORY_DAYS} days</CardTitle>
+          <CardTitle>Your Composite Sjögren&apos;s Score</CardTitle>
         </CardHeader>
         <CardContent>
-          {trendData.length === 0 ? (
+          {!trendData.some((d) => d.value !== null) ? (
             <p className="text-sm text-zinc-500">No check-ins yet.</p>
           ) : (
             <>
-              <TrendLineChart data={trendData} domain={[0, 4]} height={200} />
-              <p className="mt-2 text-xs text-zinc-400">0 = Very bad · 4 = Great</p>
+              <TrendLineChart data={trendData} domain={[-5, 5]} height={200} />
+              <p className="mt-2 text-xs text-zinc-400">
+                Last {HISTORY_DAYS} days · combines all your tracked symptoms relative to your baseline · higher = more active symptoms
+              </p>
             </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>By symptom</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {listedSymptoms.length === 0 ? (
+            <p className="text-sm text-zinc-500">No symptoms tracked yet.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {listedSymptoms.map((d) => {
+                const latestScore = latestBySymptom.get(d.id);
+                const band = latestScore !== undefined ? severityBand(latestScore) : undefined;
+                return (
+                  <Link
+                    key={d.id}
+                    href={`/patient/history/${d.id}`}
+                    className="flex flex-col items-center gap-1.5 rounded-xl border border-zinc-200 p-3 text-center hover:border-brand hover:bg-brand-soft"
+                  >
+                    <SymptomIcon symptomName={d.name} band={band ?? "mild"} className="h-9 w-9" />
+                    <span className="text-xs font-medium text-zinc-700">{d.patient_label}</span>
+                  </Link>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>

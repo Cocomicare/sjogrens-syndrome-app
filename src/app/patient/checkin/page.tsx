@@ -43,6 +43,7 @@ export default async function CheckinPage({
   }
 
   const entryDate = existingCheckin ? existingCheckin.entry_date : format(new Date(), "yyyy-MM-dd");
+  const entryTime = existingCheckin?.completed_at ? format(new Date(existingCheckin.completed_at), "HH:mm") : format(new Date(), "HH:mm");
 
   let initial: CheckinInitialData | undefined;
   if (existingCheckin) {
@@ -75,6 +76,7 @@ export default async function CheckinPage({
       patientId={patient.id}
       patientFirstName={patient.first_name}
       entryDate={entryDate}
+      entryTime={entryTime}
       checkinId={existingCheckin?.id}
       isEditing={Boolean(existingCheckin)}
       initial={initial}

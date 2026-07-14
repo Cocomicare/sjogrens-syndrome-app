@@ -146,6 +146,28 @@ export const SEVERITY_BAND_COLOR: Record<SeverityBand, { bg: string; text: strin
   severe: { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-400" },
 };
 
+/** Hex equivalents of SEVERITY_BAND_COLOR, for contexts (SVG gradients, canvas) that can't use Tailwind classes. */
+export const SEVERITY_BAND_HEX: Record<SeverityBand, string> = {
+  none: "#10b981",
+  mild: "#0f8b8d",
+  moderate: "#f59e0b",
+  significant: "#f97316",
+  severe: "#f43f5e",
+};
+
+/** Maps a composite signal category onto the same 5-tier severity palette used for individual symptoms. */
+export const SIGNAL_CATEGORY_BAND: Record<string, SeverityBand> = {
+  stable: "none",
+  mildly_elevated: "mild",
+  moderately_elevated: "moderate",
+  significantly_elevated: "significant",
+  safety_flag: "severe",
+};
+
+export function signalCategoryHex(category: string): string {
+  return SEVERITY_BAND_HEX[SIGNAL_CATEGORY_BAND[category] ?? "mild"];
+}
+
 /** Representative 0-10 score stored when a patient taps a severity-band icon (upper bound of each band). */
 export const SEVERITY_BAND_SCORE: Record<SeverityBand, number> = {
   none: 0,
