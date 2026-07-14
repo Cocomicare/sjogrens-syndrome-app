@@ -81,7 +81,7 @@ export default async function PatientDashboardPage() {
         </div>
       </div>
 
-      <Card>
+      <Card style={{ borderColor: "#a78bfa", borderWidth: "3px" }}>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Your Composite Sjögren&apos;s Score</CardTitle>
           <Link href="/patient/history" className="text-sm font-medium text-brand-dark hover:underline">

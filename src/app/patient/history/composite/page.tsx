@@ -90,7 +90,7 @@ export default async function CompositeScoreHistoryPage({
 
       <PatientDateRangeSelector currentStart={range.start} currentEnd={range.end} />
 
-      <Card>
+      <Card style={{ borderColor: "#a78bfa", borderWidth: "3px" }}>
         <CardHeader>
           <CardTitle>Trend</CardTitle>
         </CardHeader>
@@ -122,7 +122,7 @@ export default async function CompositeScoreHistoryPage({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card style={{ borderColor: "#a78bfa", borderWidth: "3px" }}>
         <CardHeader>
           <CardTitle>Entries</CardTitle>
         </CardHeader>
@@ -137,7 +137,7 @@ export default async function CompositeScoreHistoryPage({
                 return (
                   <li key={s.id} className="flex items-center justify-between gap-3 py-3">
                     <div className="flex items-center gap-3">
-                      <SymptomIcon symptomName="composite_score" band={band} className="h-8 w-8" />
+                      <SymptomIcon symptomName="composite_score" band={band} compositeVariant="banded" className="h-8 w-8" />
                       <div>
                         <p className="text-sm font-medium text-zinc-900">
                           {format(new Date(s.signal_date + "T00:00:00"), "EEEE, MMM d, yyyy")}

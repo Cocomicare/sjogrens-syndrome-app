@@ -265,14 +265,17 @@ function HeadacheIcon({ accent }: { accent: string }) {
   );
 }
 
-function PulseIcon({ accent }: { accent: string }) {
+/** Fixed brand color for the composite score icon's trim, independent of severity — purple is the Sjögren's awareness color. */
+const SJOGRENS_PURPLE = "#7c3aed";
+
+function PulseIcon({ color }: { color: string }) {
   return (
     <>
       <circle cx="24" cy="24" r="15" fill="white" stroke={STROKE} strokeWidth={2.2} />
       <path
-        d="M11,24 L17,24 L20,16 L24,32 L27,24 L37,24"
+        d="M10,24 L18,24 L21,14 L24,34 L27,14 L30,24 L38,24"
         fill="none"
-        stroke={accent}
+        stroke={color}
         strokeWidth={2.6}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -282,7 +285,7 @@ function PulseIcon({ accent }: { accent: string }) {
 }
 
 const ICONS: Record<string, (accent: string, bandIndex: number) => React.ReactNode> = {
-  composite_score: (accent) => <PulseIcon accent={accent} />,
+  composite_score: (accent) => <PulseIcon color={accent} />,
   eye_dryness: (accent, i) => <EyeIcon accent={accent} showShine={i <= 1} />,
   mouth_dryness: (accent) => <MouthIcon accent={accent} />,
   energy_level: (accent, i) => <BatteryIcon accent={accent} level={1 - i / 4} />,
@@ -311,13 +314,21 @@ export function SymptomIcon({
   symptomName,
   band,
   className,
+  compositeVariant = "brand",
 }: {
   symptomName?: string;
   band: SeverityBand;
   className?: string;
+  /** For the composite-score icon only: "brand" keeps the fixed purple ring/pulse (used for the one hero icon);
+   *  "banded" colors the ring by severity and renders the pulse line in neutral ink, so lists of these icons are scannable at a glance. */
+  compositeVariant?: "brand" | "banded";
 }) {
   const colors = BAND_COLOR[band];
   const bandIndex = BAND_INDEX[band];
+  const isComposite = symptomName === "composite_score";
+  const isBandedComposite = isComposite && compositeVariant === "banded";
+  const ringColor = isComposite && !isBandedComposite ? SJOGRENS_PURPLE : colors.ring;
+  const compositeAccent = isBandedComposite ? STROKE : SJOGRENS_PURPLE;
 
   if (symptomName && PHOTO_ICONS[symptomName]) {
     return (
@@ -329,12 +340,13 @@ export function SymptomIcon({
   }
 
   const render = (symptomName && ICONS[symptomName]) || undefined;
+  const accent = isComposite ? compositeAccent : colors.accent;
 
   return (
     <svg viewBox="0 0 48 48" className={className} aria-hidden>
-      <circle cx="24" cy="24" r="22" fill={colors.bg} stroke={colors.ring} strokeWidth={2} />
-      {render ? render(colors.accent, bandIndex) : <DefaultIcon accent={colors.accent} />}
-      <DistressMarks count={bandIndex} color={colors.ring} />
+      <circle cx="24" cy="24" r="22" fill={colors.bg} stroke={ringColor} strokeWidth={2} />
+      {render ? render(accent, bandIndex) : <DefaultIcon accent={accent} />}
+      <DistressMarks count={bandIndex} color={ringColor} />
     </svg>
   );
 }

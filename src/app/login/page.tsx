@@ -36,7 +36,7 @@ export default function LoginPage() {
     <div className="flex flex-1 items-center justify-center px-4 py-12">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Log in to Sjögren&apos;s Signal</CardTitle>
+          <CardTitle>Log in to My Sjogren&apos;s</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">

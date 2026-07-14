@@ -138,12 +138,50 @@ export function symptomBandLabel(symptomName: string | undefined, band: Severity
   return (symptomName && SYMPTOM_BAND_LABELS[symptomName]?.[band]) || SEVERITY_BAND_LABEL[band];
 }
 
-export const SEVERITY_BAND_COLOR: Record<SeverityBand, { bg: string; text: string; border: string }> = {
-  none: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-400" },
-  mild: { bg: "bg-brand-soft", text: "text-brand-dark", border: "border-brand" },
-  moderate: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-400" },
-  significant: { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-400" },
-  severe: { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-400" },
+export const SEVERITY_BAND_COLOR: Record<
+  SeverityBand,
+  { bg: string; text: string; border: string; soft: string; softBorder: string; hoverBorder: string }
+> = {
+  none: {
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    border: "border-emerald-400",
+    soft: "bg-emerald-50/60",
+    softBorder: "border-emerald-100",
+    hoverBorder: "hover:border-emerald-300",
+  },
+  mild: {
+    bg: "bg-teal-50",
+    text: "text-teal-700",
+    border: "border-teal-400",
+    soft: "bg-teal-50/60",
+    softBorder: "border-teal-100",
+    hoverBorder: "hover:border-teal-300",
+  },
+  moderate: {
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    border: "border-amber-400",
+    soft: "bg-amber-50/60",
+    softBorder: "border-amber-100",
+    hoverBorder: "hover:border-amber-300",
+  },
+  significant: {
+    bg: "bg-orange-50",
+    text: "text-orange-700",
+    border: "border-orange-400",
+    soft: "bg-orange-50/60",
+    softBorder: "border-orange-100",
+    hoverBorder: "hover:border-orange-300",
+  },
+  severe: {
+    bg: "bg-rose-50",
+    text: "text-rose-700",
+    border: "border-rose-400",
+    soft: "bg-rose-50/60",
+    softBorder: "border-rose-100",
+    hoverBorder: "hover:border-rose-300",
+  },
 };
 
 /** Hex equivalents of SEVERITY_BAND_COLOR, for contexts (SVG gradients, canvas) that can't use Tailwind classes. */

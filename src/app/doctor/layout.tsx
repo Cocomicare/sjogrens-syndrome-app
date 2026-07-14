@@ -12,8 +12,12 @@ export default async function DoctorLayout({ children }: { children: React.React
       <header className="border-b border-zinc-200 bg-white px-6 py-3">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/doctor" className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
-              <span className="text-lg">💧</span> Sjögren&apos;s Signal
+            <Link href="/doctor" className="flex items-center gap-2 text-sm font-semibold">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo/icon-64.png" alt="" className="h-7 w-7" />
+              <span className="text-[17px]">
+                <span className="text-brand-dark">My</span><span className="text-[#a78bfa]">Sjogren&apos;s</span>
+              </span>
             </Link>
             <nav className="flex gap-4 text-sm text-zinc-600">
               <Link href="/doctor" className="hover:text-brand-dark">

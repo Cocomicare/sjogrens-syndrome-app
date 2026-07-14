@@ -39,7 +39,7 @@ export function ScoreScale({
               aria-label={`${label}: ${symptomBandLabel(symptomName, band)}`}
               className={clsx(
                 "tap-target flex flex-col items-center gap-1 rounded-xl border-2 px-1 py-2 text-center transition-colors",
-                selected ? `${colors.border} ${colors.bg}` : "border-zinc-200 bg-white hover:border-zinc-300"
+                selected ? `${colors.border} ${colors.bg}` : `${colors.softBorder} ${colors.soft} ${colors.hoverBorder}`
               )}
             >
               <SymptomIcon symptomName={symptomName} band={band} className="h-9 w-9" />

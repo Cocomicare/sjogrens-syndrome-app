@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { DevDisclaimerBanner } from "@/components/layout/DevDisclaimerBanner";
+import { SplashScreen } from "@/components/layout/SplashScreen";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sjögren's Signal",
+  title: "My Sjogren's",
   description: "Symptom tracking between visits for pediatric Sjögren's syndrome patients.",
 };
 
@@ -29,6 +30,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <SplashScreen />
         <DevDisclaimerBanner />
         {children}
       </body>

@@ -104,7 +104,7 @@ export default async function PatientHistoryPage() {
               href="/patient/history/composite"
               className="flex flex-col items-center gap-1.5 rounded-xl border border-zinc-200 p-3 text-center hover:border-brand hover:bg-brand-soft"
             >
-              <SymptomIcon symptomName="composite_score" band={compositeBand ?? "mild"} className="h-9 w-9" />
+              <SymptomIcon symptomName="composite_score" band={compositeBand ?? "mild"} compositeVariant="banded" className="h-9 w-9" />
               <span className="text-xs font-medium text-zinc-700">Composite Score</span>
             </Link>
             {coreSymptoms.map((d) => {
@@ -128,7 +128,7 @@ export default async function PatientHistoryPage() {
       <Card>
         <details>
           <summary className="cursor-pointer list-none px-5 pt-5">
-            <CardTitle className="inline">All check-ins</CardTitle>
+            <CardTitle className="inline">All Check-ins History</CardTitle>
           </summary>
           <CardContent>
             {!checkins || checkins.length === 0 ? (
