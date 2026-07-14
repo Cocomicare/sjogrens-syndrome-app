@@ -1,19 +1,26 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { format, subDays } from "date-fns";
+import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/profile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { TrendLineChart } from "@/components/charts/TrendLineChart";
 import { SymptomIcon } from "@/components/checkin/SymptomIcon";
-import { severityBand, symptomBandLabel } from "@/lib/types/domain";
+import { PatientDateRangeSelector } from "@/components/patient/PatientDateRangeSelector";
+import { resolvePatientDateRange } from "@/lib/reports/patientDateRange";
+import { SEVERITY_BAND_HEX, severityBand, symptomBandLabel } from "@/lib/types/domain";
 
-const HISTORY_DAYS = 90;
-
-export default async function SymptomHistoryPage({ params }: { params: Promise<{ symptomId: string }> }) {
+export default async function SymptomHistoryPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ symptomId: string }>;
+  searchParams: Promise<{ preset?: string; start?: string; end?: string }>;
+}) {
   const profile = await requireProfile();
   const supabase = await createClient();
   const { symptomId } = await params;
+  const sp = await searchParams;
 
   const { data: patients } = await supabase
     .from("patients")
@@ -27,18 +34,19 @@ export default async function SymptomHistoryPage({ params }: { params: Promise<{
   const { data: symptom } = await supabase.from("symptom_definitions").select("*").eq("id", symptomId).maybeSingle();
   if (!symptom || symptom.is_safety_flag) notFound();
 
-  const since = format(subDays(new Date(), HISTORY_DAYS - 1), "yyyy-MM-dd");
+  const range = resolvePatientDateRange(sp);
 
   const { data: checkins } = await supabase
     .from("daily_checkins")
     .select("*")
     .eq("patient_id", patient.id)
     .not("completed_at", "is", null)
-    .gte("entry_date", since)
+    .gte("entry_date", range.start)
+    .lte("entry_date", range.end)
     .order("entry_date", { ascending: false })
     .order("completed_at", { ascending: false });
 
-  // Latest check-in per day represents that day for this trend, same convention as the main history chart.
+  // Latest check-in per day represents that day for this trend, same convention as the composite chart.
   const latestCheckinPerDay = new Map<string, { id: string; entry_date: string }>();
   for (const c of checkins ?? []) {
     if (!latestCheckinPerDay.has(c.entry_date)) latestCheckinPerDay.set(c.entry_date, c);
@@ -52,7 +60,10 @@ export default async function SymptomHistoryPage({ params }: { params: Promise<{
   const scoreByCheckinId = new Map((symptomEntries ?? []).map((e) => [e.daily_checkin_id, e.score]));
 
   const trendData = [...latestCheckinPerDay.entries()]
-    .map(([date, c]) => ({ date, value: scoreByCheckinId.get(c.id) ?? null }))
+    .map(([date, c]) => {
+      const value = scoreByCheckinId.get(c.id) ?? null;
+      return { date, value, color: value !== null ? SEVERITY_BAND_HEX[severityBand(value)] : undefined };
+    })
     .reverse();
 
   const recordedScores = trendData.map((d) => d.value).filter((v): v is number => v !== null);
@@ -89,9 +100,11 @@ export default async function SymptomHistoryPage({ params }: { params: Promise<{
         </div>
       </div>
 
+      <PatientDateRangeSelector currentStart={range.start} currentEnd={range.end} />
+
       <Card>
         <CardHeader>
-          <CardTitle>Last {HISTORY_DAYS} days</CardTitle>
+          <CardTitle>Trend</CardTitle>
         </CardHeader>
         <CardContent>
           {recordedScores.length === 0 ? (

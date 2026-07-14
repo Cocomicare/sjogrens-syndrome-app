@@ -265,7 +265,24 @@ function HeadacheIcon({ accent }: { accent: string }) {
   );
 }
 
+function PulseIcon({ accent }: { accent: string }) {
+  return (
+    <>
+      <circle cx="24" cy="24" r="15" fill="white" stroke={STROKE} strokeWidth={2.2} />
+      <path
+        d="M11,24 L17,24 L20,16 L24,32 L27,24 L37,24"
+        fill="none"
+        stroke={accent}
+        strokeWidth={2.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </>
+  );
+}
+
 const ICONS: Record<string, (accent: string, bandIndex: number) => React.ReactNode> = {
+  composite_score: (accent) => <PulseIcon accent={accent} />,
   eye_dryness: (accent, i) => <EyeIcon accent={accent} showShine={i <= 1} />,
   mouth_dryness: (accent) => <MouthIcon accent={accent} />,
   energy_level: (accent, i) => <BatteryIcon accent={accent} level={1 - i / 4} />,
