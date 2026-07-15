@@ -14,11 +14,14 @@ export function TrendLineChart({
   data,
   color = "#0f8b8d",
   domain = [0, 10],
+  ticks,
   height = 200,
 }: {
   data: TrendPoint[];
   color?: string;
   domain?: [number, number];
+  /** Explicit tick values, e.g. [1,2,3,4,5]. Falls back to recharts' auto ticks when omitted. */
+  ticks?: number[];
   height?: number;
 }) {
   return (
@@ -31,7 +34,7 @@ export function TrendLineChart({
           tick={{ fontSize: 11, fill: "#71717a" }}
           minTickGap={24}
         />
-        <YAxis domain={domain} tick={{ fontSize: 11, fill: "#71717a" }} width={32} />
+        <YAxis domain={domain} ticks={ticks} tick={{ fontSize: 11, fill: "#71717a" }} width={40} />
         <Tooltip
           labelFormatter={(d) => format(new Date(d), "MMM d, yyyy")}
           contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid #e4e4e7" }}

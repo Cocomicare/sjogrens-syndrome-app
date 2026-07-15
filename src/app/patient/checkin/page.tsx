@@ -47,10 +47,10 @@ export default async function CheckinPage({
 
   let initial: CheckinInitialData | undefined;
   if (existingCheckin) {
-    const { data: symptomEntries } = await supabase
-      .from("symptom_entries")
-      .select("*")
-      .eq("daily_checkin_id", existingCheckin.id);
+    const [{ data: symptomEntries }, { data: familyObservation }] = await Promise.all([
+      supabase.from("symptom_entries").select("*").eq("daily_checkin_id", existingCheckin.id),
+      supabase.from("family_observation_entries").select("notes").eq("daily_checkin_id", existingCheckin.id).maybeSingle(),
+    ]);
 
     const coreIds = new Set(catalog.filter((d) => d.is_core).map((d) => d.id));
     const optionalIds = new Set(catalog.filter((d) => d.is_optional && !d.is_safety_flag).map((d) => d.id));
@@ -68,6 +68,7 @@ export default async function CheckinPage({
       safetyPresent: Object.fromEntries(
         (symptomEntries ?? []).filter((e) => safetyIds.has(e.symptom_definition_id)).map((e) => [e.symptom_definition_id, true])
       ),
+      familyNote: familyObservation?.notes ?? undefined,
     };
   }
 

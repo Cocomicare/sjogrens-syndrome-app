@@ -24,6 +24,7 @@ export interface CheckinInitialData {
   coreScores: Record<string, number>;
   optionalScores: Record<string, number>;
   safetyPresent: Record<string, boolean>;
+  familyNote?: string;
 }
 
 interface Props {
@@ -61,10 +62,16 @@ export function CheckinWizard({
     initial?.coreScores ?? Object.fromEntries(coreSymptoms.map((s) => [s.id, 3]))
   );
   const [optionalOpen, setOptionalOpen] = useState(
-    Boolean(initial && (Object.keys(initial.optionalScores).length > 0 || Object.values(initial.safetyPresent).some(Boolean)))
+    Boolean(
+      initial &&
+        (Object.keys(initial.optionalScores).length > 0 ||
+          Object.values(initial.safetyPresent).some(Boolean) ||
+          initial.familyNote)
+    )
   );
   const [optionalScores, setOptionalScores] = useState<Record<string, number>>(initial?.optionalScores ?? {});
   const [safetyPresent, setSafetyPresent] = useState<Record<string, boolean>>(initial?.safetyPresent ?? {});
+  const [familyNote, setFamilyNote] = useState(initial?.familyNote ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const todayStr = format(new Date(), "yyyy-MM-dd");
@@ -109,6 +116,7 @@ export function CheckinWizard({
       optionalScores,
       safetyPresent,
       familyObservations: {},
+      familyNote: familyNote.trim() || undefined,
     };
 
     const res = await fetch("/api/checkins", {
@@ -146,7 +154,7 @@ export function CheckinWizard({
           <h1 className="text-xl font-semibold text-zinc-900">
             {isEditing ? `${patientFirstName}'s symptoms that day` : "A few quick symptoms"}
           </h1>
-          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+          <div className="rounded-2xl border-[3px] border-[#a78bfa] bg-white p-4">
             <label className="mb-2 block text-sm font-medium text-zinc-700">Check-in for</label>
             <div className="flex gap-3">
               <input
@@ -194,23 +202,34 @@ export function CheckinWizard({
             </button>
           ) : (
             <>
-              <div className="flex flex-wrap gap-2">
-                {optionalSymptoms.map((s) => {
-                  const active = s.id in optionalScores;
-                  return (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => toggleOptionalSymptom(s.id, !active)}
-                      className={clsx(
-                        "rounded-full border-2 px-4 py-2 text-sm font-medium transition-colors",
-                        active ? "border-brand bg-brand-soft text-brand-dark" : "border-zinc-200 bg-white text-zinc-700"
-                      )}
-                    >
-                      {s.patient_label}
-                    </button>
-                  );
-                })}
+              <div className="rounded-2xl border-[3px] border-[#a78bfa] bg-white p-4">
+                <div className="flex flex-wrap gap-2">
+                  {[...optionalSymptoms, ...safetySymptoms].map((s) => {
+                    const isSafety = safetySymptoms.some((sf) => sf.id === s.id);
+                    const active = isSafety ? !!safetyPresent[s.id] : s.id in optionalScores;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() =>
+                          isSafety
+                            ? setSafetyPresent((prev) => ({ ...prev, [s.id]: !active }))
+                            : toggleOptionalSymptom(s.id, !active)
+                        }
+                        className={clsx(
+                          "rounded-full border-2 px-4 py-2 text-sm font-medium transition-colors",
+                          active
+                            ? isSafety
+                              ? "border-rose-400 bg-rose-50 text-rose-700"
+                              : "border-brand bg-brand-soft text-brand-dark"
+                            : "border-zinc-200 bg-white text-zinc-700"
+                        )}
+                      >
+                        {s.patient_label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
               <div className="flex flex-col gap-3">
                 {optionalSymptoms
@@ -226,26 +245,19 @@ export function CheckinWizard({
                   ))}
               </div>
 
-              <div>
-                <p className="mb-2 text-sm font-medium text-zinc-700">Any of these?</p>
-                <div className="flex flex-wrap gap-2">
-                  {safetySymptoms.map((s) => {
-                    const active = !!safetyPresent[s.id];
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => setSafetyPresent((prev) => ({ ...prev, [s.id]: !active }))}
-                        className={clsx(
-                          "rounded-full border-2 px-4 py-2 text-sm font-medium transition-colors",
-                          active ? "border-rose-400 bg-rose-50 text-rose-700" : "border-zinc-200 bg-white text-zinc-700"
-                        )}
-                      >
-                        {s.patient_label}
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="rounded-2xl border-[3px] border-[#a78bfa] bg-white p-4">
+                <label htmlFor="familyNote" className="mb-2 block text-sm font-medium text-zinc-700">
+                  Don&apos;t see it above? Describe a custom symptom or add a note
+                </label>
+                <textarea
+                  id="familyNote"
+                  value={familyNote}
+                  onChange={(e) => setFamilyNote(e.target.value)}
+                  maxLength={2000}
+                  rows={3}
+                  placeholder="e.g. &quot;Neck felt stiff this morning&quot; or any other detail for your care team"
+                  className="w-full resize-none rounded-xl border border-zinc-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                />
               </div>
 
               {hasSafetyFlag && (

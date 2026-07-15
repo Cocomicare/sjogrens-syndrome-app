@@ -24,7 +24,7 @@ export function ScoreScale({
   const currentBand = severityBand(value);
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+    <div className="rounded-2xl border-[3px] border-[#a78bfa] bg-white p-4">
       <p className="mb-3 font-medium text-zinc-900">{label}</p>
       <div className="grid grid-cols-5 gap-1.5">
         {SEVERITY_BAND_ORDER.map((band) => {

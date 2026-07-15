@@ -8,7 +8,12 @@ import { TrendLineChart } from "@/components/charts/TrendLineChart";
 import { SymptomIcon } from "@/components/checkin/SymptomIcon";
 import { PatientDateRangeSelector } from "@/components/patient/PatientDateRangeSelector";
 import { resolvePatientDateRange } from "@/lib/reports/patientDateRange";
-import { SEVERITY_BAND_HEX, severityBand, symptomBandLabel } from "@/lib/types/domain";
+import { SEVERITY_BAND_HEX, SEVERITY_BAND_ORDER, severityBand, symptomBandLabel } from "@/lib/types/domain";
+
+/** Maps a raw 0-10 score onto the patient-facing 1 (Severe) - 5 (None) band scale, worst to best. */
+function bandScaleValue(score: number): number {
+  return SEVERITY_BAND_ORDER.indexOf(severityBand(score)) + 1;
+}
 
 export default async function SymptomHistoryPage({
   params,
@@ -61,8 +66,10 @@ export default async function SymptomHistoryPage({
 
   const trendData = [...latestCheckinPerDay.entries()]
     .map(([date, c]) => {
-      const value = scoreByCheckinId.get(c.id) ?? null;
-      return { date, value, color: value !== null ? SEVERITY_BAND_HEX[severityBand(value)] : undefined };
+      const rawScore = scoreByCheckinId.get(c.id) ?? null;
+      if (rawScore === null) return { date, value: null, color: undefined };
+      const band = severityBand(rawScore);
+      return { date, value: bandScaleValue(rawScore), color: SEVERITY_BAND_HEX[band] };
     })
     .reverse();
 
@@ -73,8 +80,10 @@ export default async function SymptomHistoryPage({
   const highest = recordedScores.length ? Math.max(...recordedScores) : null;
   const lowest = recordedScores.length ? Math.min(...recordedScores) : null;
 
-  const latestEntry = trendData.filter((d) => d.value !== null).at(-1) ?? null;
-  const latestBand = latestEntry ? severityBand(latestEntry.value as number) : undefined;
+  const latestRawScore = [...latestCheckinPerDay.values()]
+    .map((c) => scoreByCheckinId.get(c.id) ?? null)
+    .find((v) => v !== null);
+  const latestBand = latestRawScore !== undefined && latestRawScore !== null ? severityBand(latestRawScore) : undefined;
 
   // Full list of individual entries, most recent first, for the detail list below the chart.
   const entryRows = (checkins ?? [])
@@ -111,8 +120,8 @@ export default async function SymptomHistoryPage({
             <p className="text-sm text-zinc-500">No {symptom.patient_label.toLowerCase()} entries in this range yet.</p>
           ) : (
             <>
-              <TrendLineChart data={trendData} domain={[0, 10]} height={200} />
-              <p className="mt-2 text-xs text-zinc-400">0 = None · 10 = Severe</p>
+              <TrendLineChart data={trendData} domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} height={200} />
+              <p className="mt-2 text-xs text-zinc-400">1 = Severe · 5 = None</p>
               <div className="mt-4 grid grid-cols-3 gap-3 border-t border-zinc-100 pt-4">
                 <div>
                   <p className="text-xs text-zinc-500">Average</p>
@@ -157,7 +166,7 @@ export default async function SymptomHistoryPage({
                           )}
                         </p>
                         <p className="text-xs text-zinc-500">
-                          {score} · {symptomBandLabel(symptom.name, band)}
+                          {bandScaleValue(score)}/5 · {symptomBandLabel(symptom.name, band)}
                         </p>
                       </div>
                     </div>
