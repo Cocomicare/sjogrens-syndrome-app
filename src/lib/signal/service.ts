@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database";
 import { calculateBaseline, DEFAULT_BASELINE_WINDOW_DAYS } from "./baseline";
-import { resolveWeight } from "./weights";
+import { resolveCalculationMethod, resolveWeight } from "./weights";
 import { computeSymptomSignal } from "./compositeScore";
 import type { SymptomBaselineInput, SymptomObservation } from "./types";
 
@@ -107,6 +107,8 @@ export async function recalculateSignalForPatientDate(
       symptomKey: def.name,
       baselineScore: baseline.baselineScore,
       weight: resolveWeight(Number(def.default_weight), setting?.custom_weight ?? null),
+      standardDeviation: baseline.standardDeviation,
+      calculationMethod: resolveCalculationMethod(def.default_calculation_method, setting?.calculation_method ?? null),
     });
   }
 

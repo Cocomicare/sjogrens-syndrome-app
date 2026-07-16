@@ -31,14 +31,15 @@ export function SymptomRow({ symptom }: { symptom: SymptomDefinition }) {
         <input
           type="number"
           min={0}
-          max={10}
-          step={0.5}
+          max={100}
+          step={5}
           value={weight}
           disabled={symptom.is_safety_flag || saving}
           onChange={(e) => setWeight(Number(e.target.value))}
           onBlur={() => save({ defaultWeight: weight })}
           className="w-16 rounded-lg border border-zinc-300 px-2 py-1 text-sm disabled:bg-zinc-50"
         />
+        %
       </td>
       <td className="py-2">
         <button

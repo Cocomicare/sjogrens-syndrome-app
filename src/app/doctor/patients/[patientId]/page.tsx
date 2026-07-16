@@ -12,15 +12,14 @@ import { SignalBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { TrendLineChart } from "@/components/charts/TrendLineChart";
 import { DateRangeSelector } from "@/components/doctor/DateRangeSelector";
-import { AppointmentForm } from "@/components/doctor/AppointmentForm";
-import { FAMILY_OBSERVATION_OPTIONS, SIGNAL_CATEGORY_LABEL } from "@/lib/types/domain";
+import { SymptomCalcSettings } from "@/components/doctor/SymptomCalcSettings";
 
 export default async function PatientDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ patientId: string }>;
-  searchParams: Promise<{ preset?: string; start?: string; end?: string }>;
+  searchParams: Promise<{ preset?: string; start?: string; end?: string; settings?: string }>;
 }) {
   const profile = await requireProfile();
   const { patientId } = await params;
@@ -39,35 +38,19 @@ export default async function PatientDetailPage({
   if (!data) notFound();
 
   const { patient } = data;
-  const latestSignal = data.signals[data.signals.length - 1];
   const coreSymptoms = data.symptomDefinitions.filter((d) => d.is_core);
   const optionalSymptoms = data.symptomDefinitions.filter(
     (d) => d.is_optional && !d.is_safety_flag && data.symptomEntries.some((e) => e.symptom_definition_id === d.id)
   );
-  const safetySymptoms = data.symptomDefinitions.filter((d) => d.is_safety_flag);
+  const settingBySymptomId = new Map(data.symptomSettings.map((s) => [s.symptom_definition_id, s]));
 
   const signalSeries = buildSignalSeries(data);
   const highSymptomPeriods = groupHighSymptomPeriods(data.signals.map((s) => ({ signal_date: s.signal_date, category: s.category })));
   const safetyFlagDays = data.signals.filter((s) => s.safety_flags.length > 0);
 
-  const checkinById = new Map(data.checkins.map((c) => [c.id, c]));
-  const familyObservationDays = data.familyObservations
-    .map((fo) => ({ fo, checkin: checkinById.get(fo.daily_checkin_id) }))
-    .filter((x) => x.checkin)
-    .filter(
-      (x) =>
-        x.fo.missed_school ||
-        x.fo.reduced_activity ||
-        x.fo.poor_sleep ||
-        x.fo.appetite_change ||
-        x.fo.visible_discomfort ||
-        x.fo.medication_missed ||
-        x.fo.other_concern ||
-        x.fo.notes
-    )
-    .sort((a, b) => (a.checkin!.entry_date < b.checkin!.entry_date ? 1 : -1));
-
   const rangeQuery = `preset=${range.preset}&start=${range.start}&end=${range.end}`;
+  const showSettings = sp.settings === "1";
+  const settingsToggleQuery = showSettings ? rangeQuery : `${rangeQuery}&settings=1`;
 
   return (
     <div className="flex flex-col gap-6">
@@ -85,11 +68,9 @@ export default async function PatientDetailPage({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {latestSignal ? (
-            <SignalBadge category={latestSignal.category} />
-          ) : (
-            <span className="text-sm text-zinc-400">No signal data in range</span>
-          )}
+          <Link href={`?${settingsToggleQuery}`}>
+            <Button variant="secondary">{showSettings ? "Hide score settings" : "⚙ Score settings"}</Button>
+          </Link>
           <Link href={`/doctor/patients/${patientId}/report?${rangeQuery}`}>
             <Button>Generate office visit report</Button>
           </Link>
@@ -131,7 +112,10 @@ export default async function PatientDetailPage({
             {coreSymptoms.map((symptom) => (
               <div key={symptom.id}>
                 <p className="mb-1 text-sm font-medium text-zinc-700">{symptom.patient_label}</p>
-                <TrendLineChart data={buildSymptomSeries(data, symptom.id)} height={160} />
+                <TrendLineChart data={buildSymptomSeries(data, symptom.id)} domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} height={160} />
+                {showSettings && (
+                  <SymptomCalcSettings patientId={patientId} symptom={symptom} setting={settingBySymptomId.get(symptom.id)} />
+                )}
               </div>
             ))}
           </div>
@@ -148,7 +132,10 @@ export default async function PatientDetailPage({
               {optionalSymptoms.map((symptom) => (
                 <div key={symptom.id}>
                   <p className="mb-1 text-sm font-medium text-zinc-700">{symptom.patient_label}</p>
-                  <TrendLineChart data={buildSymptomSeries(data, symptom.id)} height={160} color="#d97706" />
+                  <TrendLineChart data={buildSymptomSeries(data, symptom.id)} domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} height={160} />
+                  {showSettings && (
+                    <SymptomCalcSettings patientId={patientId} symptom={symptom} setting={settingBySymptomId.get(symptom.id)} />
+                  )}
                 </div>
               ))}
             </div>
@@ -190,62 +177,6 @@ export default async function PatientDetailPage({
           )}
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Family observations & notes timeline</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {familyObservationDays.length === 0 ? (
-            <p className="text-sm text-zinc-500">No family observations recorded in this range.</p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {familyObservationDays.map(({ fo, checkin }) => (
-                <li key={fo.id} className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
-                  <p className="text-xs font-medium text-zinc-500">{format(new Date(checkin!.entry_date), "MMM d, yyyy")}</p>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    {FAMILY_OBSERVATION_OPTIONS.filter((opt) => fo[opt.key]).map((opt) => (
-                      <span key={opt.key} className="rounded-full bg-white px-2 py-0.5 text-xs text-zinc-700 ring-1 ring-zinc-200">
-                        {opt.icon} {opt.label}
-                      </span>
-                    ))}
-                  </div>
-                  {fo.notes && <p className="mt-1.5 text-sm text-zinc-600">&ldquo;{fo.notes}&rdquo;</p>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Appointments</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <AppointmentForm patientId={patientId} />
-          {data.appointments.length > 0 && (
-            <ul className="divide-y divide-zinc-100 text-sm">
-              {data.appointments.map((a) => (
-                <li key={a.id} className="flex items-center justify-between py-2">
-                  <span className="text-zinc-700">
-                    {format(new Date(a.appointment_date), "MMM d, yyyy")}
-                    {a.appointment_type && <span className="ml-2 text-zinc-400">{a.appointment_type}</span>}
-                  </span>
-                  {a.notes && <span className="text-zinc-500">{a.notes}</span>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      {safetySymptoms.length > 0 && (
-        <p className="text-xs text-zinc-400">
-          Tracked safety-flag symptoms: {safetySymptoms.map((s) => s.patient_label).join(", ")}. Category legend:{" "}
-          {Object.values(SIGNAL_CATEGORY_LABEL).join(", ")}.
-        </p>
-      )}
     </div>
   );
 }

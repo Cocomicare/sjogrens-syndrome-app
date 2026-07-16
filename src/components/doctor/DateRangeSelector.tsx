@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/Button";
 import type { RangePreset } from "@/lib/reports/dateRange";
 
 const PRESETS: { value: RangePreset; label: string }[] = [
-  { value: "since_last_appointment", label: "Since last appointment" },
   { value: "30", label: "Last 30 days" },
   { value: "60", label: "Last 60 days" },
   { value: "90", label: "Last 90 days" },
@@ -18,7 +17,7 @@ export function DateRangeSelector({ currentStart, currentEnd }: { currentStart: 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const activePreset = (searchParams.get("preset") as RangePreset) || "since_last_appointment";
+  const activePreset = (searchParams.get("preset") as RangePreset) || "90";
   const [customStart, setCustomStart] = useState(currentStart);
   const [customEnd, setCustomEnd] = useState(currentEnd);
 

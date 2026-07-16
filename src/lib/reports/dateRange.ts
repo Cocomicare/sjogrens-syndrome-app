@@ -19,7 +19,7 @@ export async function resolveDateRange(
   params: { preset?: string; start?: string; end?: string }
 ): Promise<ResolvedRange> {
   const today = format(new Date(), "yyyy-MM-dd");
-  const preset = (params.preset as RangePreset) || "since_last_appointment";
+  const preset = (params.preset as RangePreset) || "90";
 
   if (preset === "custom" && params.start && params.end) {
     return { start: params.start, end: params.end, preset, label: "Custom range" };

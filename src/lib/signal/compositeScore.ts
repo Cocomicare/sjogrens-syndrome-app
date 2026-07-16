@@ -4,8 +4,16 @@ import { categorizeScore, combineWithSafetyFlags } from "./categorize";
 /**
  * Computes the Sjögren's Symptom Signal for a single check-in.
  *
- *   weighted deviation = (current score - baseline score) x symptom weight
+ *   raw deviation      = current score - baseline score
+ *   normalized dev.     = "stddev" method: raw deviation / standard deviation (a personal z-score)
+ *                         "average" method: raw deviation, unchanged
+ *   weighted deviation = normalized deviation x symptom weight
  *   composite signal   = sum(weighted deviations) / sum(weights included)
+ *
+ * Calculation method is per symptom (catalog default, patient-overridable —
+ * see resolveCalculationMethod). "stddev" falls back to "average" when the
+ * symptom doesn't yet have a standard deviation (e.g. too little history, or
+ * zero variance), since dividing by zero/undefined isn't meaningful.
  *
  * Symptoms without both a current score AND an established baseline are
  * excluded entirely (never treated as zero). Safety-flag symptoms are
@@ -40,7 +48,11 @@ export function computeSymptomSignal(input: SignalComputationInput): SignalCompu
       continue;
     }
 
-    const weightedDeviation = (obs.score - baseline.baselineScore) * baseline.weight;
+    const rawDeviation = obs.score - baseline.baselineScore;
+    const useStdDev =
+      baseline.calculationMethod === "stddev" && !!baseline.standardDeviation && baseline.standardDeviation > 0;
+    const normalizedDeviation = useStdDev ? rawDeviation / (baseline.standardDeviation as number) : rawDeviation;
+    const weightedDeviation = normalizedDeviation * baseline.weight;
     weightedDeviationSum += weightedDeviation;
     weightSum += baseline.weight;
     includedSymptoms.push(obs.symptomKey);

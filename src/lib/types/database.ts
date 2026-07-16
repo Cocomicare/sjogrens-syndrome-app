@@ -25,6 +25,8 @@ export type ReportType =
 
 export type TrackingFrequency = "daily" | "weekly" | "as_needed";
 
+export type CalculationMethod = "average" | "stddev";
+
 export type Clinic = {
   id: string;
   name: string;
@@ -94,6 +96,7 @@ export type SymptomDefinition = {
   clinical_label: string;
   category: SymptomCategory;
   default_weight: number;
+  default_calculation_method: CalculationMethod;
   is_core: boolean;
   is_optional: boolean;
   is_safety_flag: boolean;
@@ -109,6 +112,7 @@ export type PatientSymptomSetting = {
   symptom_definition_id: string;
   enabled: boolean;
   custom_weight: number | null;
+  calculation_method: CalculationMethod | null;
   tracking_frequency: TrackingFrequency;
   created_at: string;
   updated_at: string;

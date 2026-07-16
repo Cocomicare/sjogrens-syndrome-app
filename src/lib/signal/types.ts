@@ -1,4 +1,4 @@
-import type { SignalCategory } from "@/lib/types/database";
+import type { CalculationMethod, SignalCategory } from "@/lib/types/database";
 
 /** A single symptom's reported value for one check-in, decoupled from DB row shape. */
 export interface SymptomObservation {
@@ -16,6 +16,10 @@ export interface SymptomBaselineInput {
   baselineScore: number;
   /** Clinical weight for this symptom, after applying any patient-specific override. */
   weight: number;
+  /** Standard deviation of the patient's own historical scores for this symptom, when known. */
+  standardDeviation?: number | null;
+  /** "average" compares the raw point difference from baseline; "stddev" normalizes it by the patient's own historical variability for this symptom. */
+  calculationMethod?: CalculationMethod;
 }
 
 export interface SignalComputationInput {

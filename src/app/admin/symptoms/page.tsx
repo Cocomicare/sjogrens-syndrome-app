@@ -25,7 +25,7 @@ export default async function AdminSymptomsPage() {
                 <th className="py-1.5 pr-3">Patient label</th>
                 <th className="py-1.5 pr-3">Clinical label</th>
                 <th className="py-1.5 pr-3">Category</th>
-                <th className="py-1.5 pr-3">Default weight</th>
+                <th className="py-1.5 pr-3">Default weight (%)</th>
                 <th className="py-1.5">Status</th>
               </tr>
             </thead>

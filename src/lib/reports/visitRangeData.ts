@@ -9,6 +9,7 @@ import type {
   Medication,
   MedicationEntry,
   Patient,
+  PatientSymptomSetting,
   SymptomBaseline,
   SymptomDefinition,
   SymptomEntry,
@@ -24,6 +25,7 @@ export interface VisitRangeData {
   familyObservations: FamilyObservationEntry[];
   signals: SymptomSignal[];
   symptomDefinitions: SymptomDefinition[];
+  symptomSettings: PatientSymptomSetting[];
   appointments: Appointment[];
   baselines: SymptomBaseline[];
   medications: Medication[];
@@ -42,6 +44,7 @@ export async function fetchVisitRangeData(
     { data: checkins },
     { data: signals },
     { data: symptomDefinitions },
+    { data: symptomSettings },
     { data: appointments },
     { data: baselines },
     { data: medications },
@@ -61,6 +64,7 @@ export async function fetchVisitRangeData(
       .lte("signal_date", range.end)
       .order("signal_date"),
     supabase.from("symptom_definitions").select("*").order("sort_order"),
+    supabase.from("patient_symptom_settings").select("*").eq("patient_id", patientId),
     supabase.from("appointments").select("*").eq("patient_id", patientId).order("appointment_date"),
     supabase.from("symptom_baselines").select("*").eq("patient_id", patientId),
     supabase.from("medications").select("*").eq("patient_id", patientId),
@@ -95,6 +99,7 @@ export async function fetchVisitRangeData(
     familyObservations: familyObservations ?? [],
     signals: signals ?? [],
     symptomDefinitions: symptomDefinitions ?? [],
+    symptomSettings: symptomSettings ?? [],
     appointments: appointments ?? [],
     baselines: baselines ?? [],
     medications: medications ?? [],

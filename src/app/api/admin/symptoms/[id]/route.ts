@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { SymptomDefinition } from "@/lib/types/database";
 
 const updateSchema = z.object({
-  defaultWeight: z.number().min(0).max(10).optional(),
+  defaultWeight: z.number().min(0).max(100).optional(),
   activeStatus: z.boolean().optional(),
 });
 
