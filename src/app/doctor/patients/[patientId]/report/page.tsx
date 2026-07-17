@@ -196,23 +196,6 @@ export default async function OfficeVisitReportPage({
         </Card>
       )}
 
-      {report.familyObservationSummary.length > 0 && (
-        <Card className="break-inside-avoid">
-          <CardHeader>
-            <CardTitle>Family observations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="flex flex-wrap gap-2">
-              {report.familyObservationSummary.map((f) => (
-                <li key={f.key} className="rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-700">
-                  {f.icon} {f.label} · {f.count}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
       {report.notesTimeline.length > 0 && (
         <Card className="break-inside-avoid">
           <CardHeader>

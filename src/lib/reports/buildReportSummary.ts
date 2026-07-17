@@ -2,7 +2,6 @@ import { differenceInCalendarDays } from "date-fns";
 import type { TrendPoint } from "@/components/charts/TrendLineChart";
 import { groupHighSymptomPeriods, type HighSymptomPeriod } from "./highSymptomPeriods";
 import type { VisitRangeData } from "./visitRangeData";
-import { FAMILY_OBSERVATION_OPTIONS } from "@/lib/types/domain";
 
 export interface SymptomStat {
   symptomKey: string;
@@ -17,13 +16,6 @@ export interface SymptomStat {
 export interface SafetyFlagEvent {
   date: string;
   flags: string[];
-}
-
-export interface FamilyObservationSummaryItem {
-  key: string;
-  label: string;
-  icon: string;
-  count: number;
 }
 
 export interface MedicationAdherenceStat {
@@ -46,7 +38,6 @@ export interface ReportSummary {
   mostImproved: SymptomStat[];
   highSymptomPeriods: HighSymptomPeriod[];
   safetyFlagEvents: SafetyFlagEvent[];
-  familyObservationSummary: FamilyObservationSummaryItem[];
   medicationAdherence: MedicationAdherenceStat[];
   signalTrend: TrendPoint[];
   notesTimeline: { date: string; source: string; text: string }[];
@@ -58,7 +49,7 @@ export function buildReportSummary(data: VisitRangeData): ReportSummary {
   const completionPercent = daysInRange > 0 ? round1((completedCheckins / daysInRange) * 100) : 0;
 
   const baselineByDefinitionId = new Map(data.baselines.map((b) => [b.symptom_definition_id, b]));
-  const trackedDefinitions = data.symptomDefinitions.filter((d) => !d.is_safety_flag);
+  const trackedDefinitions = data.symptomDefinitions.filter((d) => d.is_core);
 
   const symptomStats: SymptomStat[] = trackedDefinitions
     .map((def): SymptomStat | null => {
@@ -93,13 +84,6 @@ export function buildReportSummary(data: VisitRangeData): ReportSummary {
   const safetyFlagEvents: SafetyFlagEvent[] = data.signals
     .filter((s) => s.safety_flags.length > 0)
     .map((s) => ({ date: s.signal_date, flags: s.safety_flags }));
-
-  const familyObservationSummary: FamilyObservationSummaryItem[] = FAMILY_OBSERVATION_OPTIONS.map((opt) => ({
-    key: opt.key,
-    label: opt.label,
-    icon: opt.icon,
-    count: data.familyObservations.filter((fo) => fo[opt.key]).length,
-  })).filter((item) => item.count > 0);
 
   const medicationAdherence: MedicationAdherenceStat[] = data.medications.map((med) => {
     const entries = data.medicationEntries.filter((e) => e.medication_id === med.id);
@@ -144,7 +128,6 @@ export function buildReportSummary(data: VisitRangeData): ReportSummary {
     mostImproved,
     highSymptomPeriods,
     safetyFlagEvents,
-    familyObservationSummary,
     medicationAdherence,
     signalTrend,
     notesTimeline,

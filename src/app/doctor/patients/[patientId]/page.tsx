@@ -39,9 +39,6 @@ export default async function PatientDetailPage({
 
   const { patient } = data;
   const coreSymptoms = data.symptomDefinitions.filter((d) => d.is_core);
-  const optionalSymptoms = data.symptomDefinitions.filter(
-    (d) => d.is_optional && !d.is_safety_flag && data.symptomEntries.some((e) => e.symptom_definition_id === d.id)
-  );
   const settingBySymptomId = new Map(data.symptomSettings.map((s) => [s.symptom_definition_id, s]));
 
   const signalSeries = buildSignalSeries(data);
@@ -121,27 +118,6 @@ export default async function PatientDetailPage({
           </div>
         </CardContent>
       </Card>
-
-      {optionalSymptoms.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Optional symptom trends</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {optionalSymptoms.map((symptom) => (
-                <div key={symptom.id}>
-                  <p className="mb-1 text-sm font-medium text-zinc-700">{symptom.patient_label}</p>
-                  <TrendLineChart data={buildSymptomSeries(data, symptom.id)} domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} height={160} />
-                  {showSettings && (
-                    <SymptomCalcSettings patientId={patientId} symptom={symptom} setting={settingBySymptomId.get(symptom.id)} />
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <Card>
         <CardHeader>
