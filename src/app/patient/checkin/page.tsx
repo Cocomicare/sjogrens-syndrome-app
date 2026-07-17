@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/profile";
 import { CheckinWizard, type CheckinInitialData } from "@/components/checkin/CheckinWizard";
+import { SEVERITY_BAND_SCORE } from "@/lib/types/domain";
 
 export default async function CheckinPage({
   searchParams,
@@ -58,12 +59,14 @@ export default async function CheckinPage({
 
     initial = {
       coreScores: Object.fromEntries(
-        (symptomEntries ?? []).filter((e) => coreIds.has(e.symptom_definition_id)).map((e) => [e.symptom_definition_id, e.score ?? 0])
+        (symptomEntries ?? [])
+          .filter((e) => coreIds.has(e.symptom_definition_id))
+          .map((e) => [e.symptom_definition_id, e.score ?? SEVERITY_BAND_SCORE.mild])
       ),
       optionalScores: Object.fromEntries(
         (symptomEntries ?? [])
           .filter((e) => optionalIds.has(e.symptom_definition_id))
-          .map((e) => [e.symptom_definition_id, e.score ?? 0])
+          .map((e) => [e.symptom_definition_id, e.score ?? SEVERITY_BAND_SCORE.mild])
       ),
       safetyPresent: Object.fromEntries(
         (symptomEntries ?? []).filter((e) => safetyIds.has(e.symptom_definition_id)).map((e) => [e.symptom_definition_id, true])

@@ -4,7 +4,12 @@ import { categorizeScore, combineWithSafetyFlags } from "./categorize";
 /**
  * Computes the Sjögren's Symptom Signal for a single check-in.
  *
- *   raw deviation      = current score - baseline score
+ * Symptom scores are 1-5, worst to best (1 = Severe, 5 = None), so a *lower*
+ * score means a worse day. The composite score is defined so that higher
+ * always means worse — deviation is therefore baseline minus today's score,
+ * not the other way around.
+ *
+ *   raw deviation      = baseline score - current score
  *   normalized dev.     = "stddev" method: raw deviation / standard deviation (a personal z-score)
  *                         "average" method: raw deviation, unchanged
  *   weighted deviation = normalized deviation x symptom weight
@@ -48,7 +53,7 @@ export function computeSymptomSignal(input: SignalComputationInput): SignalCompu
       continue;
     }
 
-    const rawDeviation = obs.score - baseline.baselineScore;
+    const rawDeviation = baseline.baselineScore - obs.score;
     const useStdDev =
       baseline.calculationMethod === "stddev" && !!baseline.standardDeviation && baseline.standardDeviation > 0;
     const normalizedDeviation = useStdDev ? rawDeviation / (baseline.standardDeviation as number) : rawDeviation;

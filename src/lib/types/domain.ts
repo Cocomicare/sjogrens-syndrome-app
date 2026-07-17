@@ -206,23 +206,23 @@ export function signalCategoryHex(category: string): string {
   return SEVERITY_BAND_HEX[SIGNAL_CATEGORY_BAND[category] ?? "mild"];
 }
 
-/** Representative 0-10 score stored when a patient taps a severity-band icon (upper bound of each band). */
+/** Representative 1-5 score stored when a patient taps a severity-band icon: 1 = Severe (worst), 5 = None (best). */
 export const SEVERITY_BAND_SCORE: Record<SeverityBand, number> = {
-  none: 0,
-  mild: 3,
-  moderate: 6,
-  significant: 8,
-  severe: 10,
+  none: 5,
+  mild: 4,
+  moderate: 3,
+  significant: 2,
+  severe: 1,
 };
 
 /** Display order left-to-right: worst (severe) to best (none). */
 export const SEVERITY_BAND_ORDER: SeverityBand[] = ["severe", "significant", "moderate", "mild", "none"];
 
 export function severityBand(score: number): SeverityBand {
-  if (score === 0) return "none";
-  if (score <= 3) return "mild";
-  if (score <= 6) return "moderate";
-  if (score <= 8) return "significant";
+  if (score >= 4.5) return "none";
+  if (score >= 3.5) return "mild";
+  if (score >= 2.5) return "moderate";
+  if (score >= 1.5) return "significant";
   return "severe";
 }
 

@@ -5,18 +5,20 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { recalculateAllSignalsForPatient } from "@/lib/signal/backfill";
 
 const updateSchema = z.object({
-  // null resets to the catalog default (clears the per-patient override).
-  calculationMethod: z.enum(["average", "stddev"]).nullable().optional(),
+  weights: z.record(z.string().uuid(), z.number().min(0).max(100)),
 });
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ patientId: string; symptomId: string }> }
-) {
-  const { patientId, symptomId } = await params;
+/** Saves the full set of core-symptom weights for a patient in one call — they must sum to exactly 100%. */
+export async function PATCH(request: Request, { params }: { params: Promise<{ patientId: string }> }) {
+  const { patientId } = await params;
   const parsed = updateSchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: "Invalid update." }, { status: 400 });
-  const { calculationMethod } = parsed.data;
+  const { weights } = parsed.data;
+
+  const total = Math.round(Object.values(weights).reduce((sum, w) => sum + w, 0) * 100) / 100;
+  if (total !== 100) {
+    return NextResponse.json({ error: `Weights must sum to 100% (currently ${total}%).` }, { status: 400 });
+  }
 
   const supabase = await createClient();
   const {
@@ -34,18 +36,17 @@ export async function PATCH(
     return NextResponse.json({ error: "Patient not found." }, { status: 404 });
   }
 
-  const update: { calculation_method?: "average" | "stddev" | null } = {};
-  if (calculationMethod !== undefined) update.calculation_method = calculationMethod;
-
-  const { error } = await supabase.from("patient_symptom_settings").upsert(
-    {
-      patient_id: patientId,
-      symptom_definition_id: symptomId,
-      ...update,
-    },
-    { onConflict: "patient_id,symptom_definition_id" }
-  );
-  if (error) return NextResponse.json({ error: "Could not save the setting." }, { status: 500 });
+  for (const [symptomDefinitionId, weight] of Object.entries(weights)) {
+    const { error } = await supabase.from("patient_symptom_settings").upsert(
+      {
+        patient_id: patientId,
+        symptom_definition_id: symptomDefinitionId,
+        custom_weight: weight,
+      },
+      { onConflict: "patient_id,symptom_definition_id" }
+    );
+    if (error) return NextResponse.json({ error: "Could not save weights." }, { status: 500 });
+  }
 
   const admin = createAdminClient();
   const { recalculated } = await recalculateAllSignalsForPatient(admin, patientId);

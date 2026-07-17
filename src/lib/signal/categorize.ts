@@ -3,11 +3,15 @@ import type { SignalCategory } from "@/lib/types/database";
 /**
  * Thresholds on the composite weighted-deviation score. Tunable independently
  * of the calculation itself — adjust these as real-world data accumulates.
+ *
+ * Scaled to the 1-5 symptom score range (max single-symptom deviation is 4,
+ * vs. 10 under the old 0-10 raw score range) — proportionally 0.4x the
+ * original 1.0 / 2.5 / 4.0 thresholds, to preserve the same sensitivity.
  */
 export const SIGNAL_THRESHOLDS = {
-  mildlyElevated: 1.0,
-  moderatelyElevated: 2.5,
-  significantlyElevated: 4.0,
+  mildlyElevated: 0.4,
+  moderatelyElevated: 1.0,
+  significantlyElevated: 1.6,
 };
 
 /** Maps a composite score to a category. Does not consider safety flags — see combineWithSafetyFlags. */

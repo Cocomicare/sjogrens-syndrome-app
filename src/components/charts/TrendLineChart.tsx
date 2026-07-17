@@ -1,6 +1,6 @@
 "use client";
 
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { format } from "date-fns";
 
 export interface TrendPoint {
@@ -16,6 +16,7 @@ export function TrendLineChart({
   domain = [0, 10],
   ticks,
   height = 200,
+  averageValue,
 }: {
   data: TrendPoint[];
   color?: string;
@@ -23,6 +24,8 @@ export function TrendLineChart({
   /** Explicit tick values, e.g. [1,2,3,4,5]. Falls back to recharts' auto ticks when omitted. */
   ticks?: number[];
   height?: number;
+  /** Draws a dashed horizontal reference line at this value, e.g. the period average. */
+  averageValue?: number | null;
 }) {
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -35,6 +38,9 @@ export function TrendLineChart({
           minTickGap={24}
         />
         <YAxis domain={domain} ticks={ticks} tick={{ fontSize: 11, fill: "#71717a" }} width={40} />
+        {averageValue !== undefined && averageValue !== null && (
+          <ReferenceLine y={averageValue} stroke="#a1a1aa" strokeDasharray="4 4" strokeWidth={1.5} />
+        )}
         <Tooltip
           labelFormatter={(d) => format(new Date(d), "MMM d, yyyy")}
           contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid #e4e4e7" }}

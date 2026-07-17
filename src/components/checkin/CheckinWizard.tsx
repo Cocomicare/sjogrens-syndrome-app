@@ -6,7 +6,7 @@ import clsx from "clsx";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/Button";
 import { ScoreScale } from "./ScoreScale";
-import { SAFETY_DISCLAIMER, severityBand, type SeverityBand } from "@/lib/types/domain";
+import { SAFETY_DISCLAIMER, SEVERITY_BAND_SCORE, severityBand, type SeverityBand } from "@/lib/types/domain";
 import type { SymptomDefinition } from "@/lib/types/database";
 
 type Step = "core" | "optional" | "confirmation";
@@ -59,7 +59,7 @@ export function CheckinWizard({
   const [entryDate, setEntryDate] = useState(initialEntryDate);
   const [entryTime, setEntryTime] = useState(initialEntryTime);
   const [coreScores, setCoreScores] = useState<Record<string, number>>(
-    initial?.coreScores ?? Object.fromEntries(coreSymptoms.map((s) => [s.id, 3]))
+    initial?.coreScores ?? Object.fromEntries(coreSymptoms.map((s) => [s.id, SEVERITY_BAND_SCORE.mild]))
   );
   const [optionalOpen, setOptionalOpen] = useState(
     Boolean(
@@ -92,7 +92,7 @@ export function CheckinWizard({
   function toggleOptionalSymptom(id: string, enabled: boolean) {
     setOptionalScores((prev) => {
       const next = { ...prev };
-      if (enabled) next[id] = next[id] ?? 3;
+      if (enabled) next[id] = next[id] ?? SEVERITY_BAND_SCORE.mild;
       else delete next[id];
       return next;
     });
@@ -103,7 +103,7 @@ export function CheckinWizard({
     setError(null);
 
     const overallSymptom = coreSymptoms.find((s) => s.name === "overall_wellness");
-    const overallScore = overallSymptom ? coreScores[overallSymptom.id] ?? 6 : 6;
+    const overallScore = overallSymptom ? coreScores[overallSymptom.id] ?? SEVERITY_BAND_SCORE.moderate : SEVERITY_BAND_SCORE.moderate;
     const overallFeeling = BAND_TO_FEELING[severityBand(overallScore)];
 
     const payload = {

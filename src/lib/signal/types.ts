@@ -3,9 +3,9 @@ import type { CalculationMethod, SignalCategory } from "@/lib/types/database";
 /** A single symptom's reported value for one check-in, decoupled from DB row shape. */
 export interface SymptomObservation {
   symptomKey: string;
-  /** 0-10 severity score. Null when the symptom wasn't rated (e.g. an optional symptom not opened). */
+  /** 1-5 severity score (1 = Severe, 5 = None). Null when the symptom wasn't rated (e.g. an optional symptom not opened). */
   score: number | null;
-  /** For safety-flag symptoms recorded as present/absent rather than a 0-10 scale. */
+  /** For safety-flag symptoms recorded as present/absent rather than a 1-5 scale. */
   isPresent?: boolean;
   isSafetyFlagSymptom: boolean;
 }

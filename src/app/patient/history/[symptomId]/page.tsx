@@ -8,12 +8,7 @@ import { TrendLineChart } from "@/components/charts/TrendLineChart";
 import { SymptomIcon } from "@/components/checkin/SymptomIcon";
 import { PatientDateRangeSelector } from "@/components/patient/PatientDateRangeSelector";
 import { resolvePatientDateRange } from "@/lib/reports/patientDateRange";
-import { SEVERITY_BAND_HEX, SEVERITY_BAND_ORDER, severityBand, symptomBandLabel } from "@/lib/types/domain";
-
-/** Maps a raw 0-10 score onto the patient-facing 1 (Severe) - 5 (None) band scale, worst to best. */
-function bandScaleValue(score: number): number {
-  return SEVERITY_BAND_ORDER.indexOf(severityBand(score)) + 1;
-}
+import { SEVERITY_BAND_HEX, severityBand, symptomBandLabel } from "@/lib/types/domain";
 
 export default async function SymptomHistoryPage({
   params,
@@ -69,7 +64,7 @@ export default async function SymptomHistoryPage({
       const rawScore = scoreByCheckinId.get(c.id) ?? null;
       if (rawScore === null) return { date, value: null, color: undefined };
       const band = severityBand(rawScore);
-      return { date, value: bandScaleValue(rawScore), color: SEVERITY_BAND_HEX[band] };
+      return { date, value: rawScore, color: SEVERITY_BAND_HEX[band] };
     })
     .reverse();
 
@@ -166,7 +161,7 @@ export default async function SymptomHistoryPage({
                           )}
                         </p>
                         <p className="text-xs text-zinc-500">
-                          {bandScaleValue(score)}/5 · {symptomBandLabel(symptom.name, band)}
+                          {score}/5 · {symptomBandLabel(symptom.name, band)}
                         </p>
                       </div>
                     </div>
